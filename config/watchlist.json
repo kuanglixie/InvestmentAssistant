@@ -1,0 +1,33 @@
+{
+  "cadence": "weekly",
+  "triggers": [
+    "new_filing",
+    "management_change"
+  ],
+  "companies": [
+    {
+      "company_id": "pdd",
+      "company": "PDD Holdings",
+      "ticker": "PDD",
+      "market": "us-adr",
+      "role": "first_deep_research_target",
+      "registry_company_id": "pdd"
+    },
+    {
+      "company_id": "alphabet",
+      "company": "Alphabet",
+      "ticker": "GOOGL",
+      "market": "us",
+      "role": "watchlist",
+      "registry_company_id": "alphabet"
+    },
+    {
+      "company_id": "tencent",
+      "company": "Tencent",
+      "ticker": "0700.HK",
+      "market": "hk",
+      "role": "watchlist",
+      "registry_company_id": "tencent"
+    }
+  ]
+}

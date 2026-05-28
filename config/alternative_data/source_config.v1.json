@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "seed_observation_paths": [],
+  "connectors": {
+    "google_trends": {
+      "enabled": true,
+      "live_status": "pending_google_trends_api_or_best_effort_pytrends",
+      "production_note": "Google Trends API alpha exists, but V1 treats live collection as pending. pytrends is best-effort only."
+    },
+    "youtube": {
+      "enabled": true,
+      "live_status": "pending_youtube_data_api_key",
+      "production_note": "Cache aggressively. YouTube search.list quota cost is high."
+    },
+    "reddit_forum": {
+      "enabled": true,
+      "live_status": "pending_reddit_api_credentials_and_retention_policy",
+      "production_note": "Collect text and metadata only; pass text events downstream to customer sentiment."
+    },
+    "app_store": {
+      "enabled": true,
+      "live_status": "pending_app_store_snapshot_or_ranking_api",
+      "production_note": "Official app pages are preferred; Sensor Tower/data.ai can be added if licensed."
+    },
+    "ecommerce_product_basket": {
+      "enabled": true,
+      "live_status": "pending_fixed_product_basket",
+      "production_note": "Basket must remain stable over time to produce comparable product-level value metrics."
+    }
+  }
+}

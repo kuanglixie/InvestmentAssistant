@@ -1,0 +1,405 @@
+{
+  "schema_version": 1,
+  "company_id": "pdd",
+  "status": "source_plan_only_v1",
+  "scope": "External source prototype for testing PDD/Temu moat hypotheses that cannot be proven from official financial reports alone.",
+  "quality_tiers": [
+    {
+      "tier": 1,
+      "label": "official_or_regulator",
+      "allowed_role": "Can support facts about rules, filings, policies, enforcement, and disclosed business model constraints.",
+      "examples": [
+        "PDD/Temu official policy pages",
+        "PDD SEC filings",
+        "competitor annual reports",
+        "government and regulator sources"
+      ]
+    },
+    {
+      "tier": 2,
+      "label": "reputable_aggregate_or_media",
+      "allowed_role": "Can support trend/context claims when methodology or editorial standard is visible.",
+      "examples": [
+        "app-store aggregate ratings",
+        "reputable business media",
+        "free industry reports with visible methodology"
+      ]
+    },
+    {
+      "tier": 3,
+      "label": "direct_user_or_merchant_voice",
+      "allowed_role": "Can support pattern leads and customer/merchant sentiment themes, but not standalone important conclusions.",
+      "examples": [
+        "Reddit",
+        "forums",
+        "merchant communities",
+        "Chinese complaint/community platforms"
+      ]
+    },
+    {
+      "tier": 4,
+      "label": "anonymous_or_influencer_opinion",
+      "allowed_role": "Lead generation only unless repeated across higher-quality sources.",
+      "examples": [
+        "single creator videos",
+        "anonymous social posts",
+        "unverified screenshots"
+      ]
+    }
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "pdd_h1_buyer_merchant_network_effect",
+      "hypothesis": "PDD/Temu may have a two-sided marketplace network effect between buyers and merchants.",
+      "official_report_basis": "Official reports discuss buyers, merchants, platform/ecosystem language, online marketing services, and transaction services.",
+      "tests": [
+        "Does user demand attract merchants without unsustainable subsidy?",
+        "Do merchants report valuable traffic and repeatable economics?",
+        "Do customers return because selection/value improves with more merchants?"
+      ]
+    },
+    {
+      "hypothesis_id": "pdd_h2_low_price_supply_chain_advantage",
+      "hypothesis": "PDD/Temu may have a durable cost/value advantage from merchant efficiency, supply-chain scale, and low-price positioning.",
+      "official_report_basis": "Official reports discuss value-for-money, competitive prices, supply chain support, and merchant operating efficiency.",
+      "tests": [
+        "Are low prices supported by structural efficiency rather than temporary subsidies?",
+        "Do customers accept product quality and delivery tradeoffs?",
+        "Can Alibaba, JD, Shein, Amazon, or Douyin-like competitors copy the same model?"
+      ]
+    },
+    {
+      "hypothesis_id": "pdd_h3_customer_engagement_advantage",
+      "hypothesis": "PDD may have an engagement advantage from interactive or social shopping behavior.",
+      "official_report_basis": "Official reports discuss interactive shopping and, historically, social/team-purchase language.",
+      "tests": [
+        "Do users show habit/repeat use rather than one-time deal seeking?",
+        "Is engagement quality high, or driven by promotions and gamified friction?",
+        "Is the engagement advantage visible outside company language?"
+      ]
+    },
+    {
+      "hypothesis_id": "pdd_h4_merchant_value_proposition",
+      "hypothesis": "PDD/Temu may offer merchants a valuable demand-generation and operating-support channel.",
+      "official_report_basis": "Official reports describe merchant services, online marketing services, transaction services, and platform support.",
+      "tests": [
+        "Do sellers report profitable order flow after ads, discounts, returns, and logistics?",
+        "Do platform rules create fragile or adversarial merchant relationships?",
+        "Do seller experiences differ between Pinduoduo and Temu?"
+      ]
+    },
+    {
+      "hypothesis_id": "pdd_h5_trust_regulatory_and_quality_risk",
+      "hypothesis": "Customer trust, product quality, logistics, data/privacy, and trade regulation may weaken or cap the moat.",
+      "official_report_basis": "Official reports identify competition, quality, logistics, regulatory, and trade risks.",
+      "tests": [
+        "Are complaints isolated service issues or structural trust problems?",
+        "Do regulators or customs changes threaten the cross-border model?",
+        "Does quality perception prevent long-term customer loyalty?"
+      ]
+    }
+  ],
+  "source_lines": [
+    {
+      "source_line_id": "customer_app_reviews",
+      "name": "App reviews and app-store aggregate reception",
+      "status": "planned",
+      "quality_tier": 2,
+      "source_types": [
+        "app_reviews",
+        "app_store_aggregates"
+      ],
+      "hypothesis_ids": [
+        "pdd_h2_low_price_supply_chain_advantage",
+        "pdd_h3_customer_engagement_advantage",
+        "pdd_h5_trust_regulatory_and_quality_risk"
+      ],
+      "validation_role": "Test customer satisfaction, trust, delivery, refund, quality, and repeat-use signals.",
+      "planned_sources": [
+        {
+          "name": "Apple App Store Temu reviews",
+          "locator_type": "search_query",
+          "locator": "Apple App Store Temu app reviews rating complaints refund shipping quality",
+          "language": "English",
+          "expected_evidence": "Aggregate rating, review volume, recent review themes, and complaint clusters."
+        },
+        {
+          "name": "Google Play Temu reviews",
+          "locator_type": "search_query",
+          "locator": "Google Play Temu reviews rating complaints refund shipping quality",
+          "language": "English",
+          "expected_evidence": "Aggregate rating, review volume, recent review themes, and complaint clusters."
+        }
+      ],
+      "audit_notes": [
+        "Separate aggregate rating/volume from cherry-picked review examples.",
+        "Low-star review anecdotes cannot prove a broad moat problem without pattern evidence."
+      ]
+    },
+    {
+      "source_line_id": "customer_public_discussion",
+      "name": "Customer public discussion and product experience",
+      "status": "planned",
+      "quality_tier": 3,
+      "source_types": [
+        "reddit",
+        "forums",
+        "youtube",
+        "bilibili",
+        "zhihu",
+        "xiaohongshu"
+      ],
+      "hypothesis_ids": [
+        "pdd_h2_low_price_supply_chain_advantage",
+        "pdd_h3_customer_engagement_advantage",
+        "pdd_h5_trust_regulatory_and_quality_risk"
+      ],
+      "validation_role": "Look for repeated real-user patterns around product quality, delivery time, refunds, app experience, and whether low price creates loyalty.",
+      "planned_sources": [
+        {
+          "name": "Reddit Temu customer discussions",
+          "locator_type": "search_query",
+          "locator": "site:reddit.com Temu review quality refund shipping app experience repeat purchase",
+          "language": "English",
+          "expected_evidence": "Repeated user themes and disconfirming examples."
+        },
+        {
+          "name": "YouTube Temu product experience videos",
+          "locator_type": "search_query",
+          "locator": "YouTube Temu review quality shipping refund haul repeat purchase",
+          "language": "English",
+          "expected_evidence": "Visible product/shipping/review patterns, with creator incentives flagged."
+        },
+        {
+          "name": "Bilibili / 知乎 / 小红书 Pinduoduo and Temu discussions",
+          "locator_type": "search_query",
+          "locator": "拼多多 Temu 质量 售后 物流 用户 评价 复购",
+          "language": "Chinese",
+          "expected_evidence": "Chinese customer sentiment and product/service complaint themes."
+        }
+      ],
+      "audit_notes": [
+        "Treat individual posts/videos as leads, not facts.",
+        "Important claims require repeated independent sources or stronger Tier 1/Tier 2 support."
+      ]
+    },
+    {
+      "source_line_id": "merchant_seller_feedback",
+      "name": "Merchant and seller economics",
+      "status": "planned",
+      "quality_tier": 3,
+      "source_types": [
+        "official_seller_pages",
+        "merchant_forums",
+        "seller_communities",
+        "complaint_platforms"
+      ],
+      "hypothesis_ids": [
+        "pdd_h1_buyer_merchant_network_effect",
+        "pdd_h4_merchant_value_proposition",
+        "pdd_h5_trust_regulatory_and_quality_risk"
+      ],
+      "validation_role": "Test whether merchants receive durable value after platform rules, marketing spend, returns, fines, logistics, and required discounts.",
+      "planned_sources": [
+        {
+          "name": "Temu seller / merchant official pages",
+          "locator_type": "search_query",
+          "locator": "Temu seller center merchant rules fees logistics returns official",
+          "language": "English",
+          "expected_evidence": "Official merchant rules, fee/logistics disclosures, and seller obligations."
+        },
+        {
+          "name": "Chinese merchant discussions",
+          "locator_type": "search_query",
+          "locator": "拼多多 商家 利润 罚款 退货 流量 广告 Temu 卖家 规则",
+          "language": "Chinese",
+          "expected_evidence": "Repeated merchant claims about profitability, traffic quality, and platform-rule friction."
+        },
+        {
+          "name": "Seller forums and ecommerce communities",
+          "locator_type": "search_query",
+          "locator": "Temu seller forum merchant profitability fees returns logistics complaints",
+          "language": "English",
+          "expected_evidence": "Seller economics themes and evidence of merchant satisfaction or churn risk."
+        }
+      ],
+      "audit_notes": [
+        "Official seller pages can support rules but not seller profitability.",
+        "Merchant complaints need triangulation because dissatisfied sellers are overrepresented in forums."
+      ]
+    },
+    {
+      "source_line_id": "competitor_public_materials",
+      "name": "Competitor public materials",
+      "status": "planned",
+      "quality_tier": 1,
+      "source_types": [
+        "competitor_filings",
+        "competitor_ir",
+        "competitor_policy_pages"
+      ],
+      "hypothesis_ids": [
+        "pdd_h1_buyer_merchant_network_effect",
+        "pdd_h2_low_price_supply_chain_advantage",
+        "pdd_h4_merchant_value_proposition"
+      ],
+      "validation_role": "Test whether PDD's model is differentiated or easily copied by Alibaba, JD, Amazon, Shein, Douyin-like commerce, or other low-price platforms.",
+      "planned_sources": [
+        {
+          "name": "Alibaba annual reports and IR",
+          "locator_type": "search_query",
+          "locator": "Alibaba annual report Taobao Tmall value-for-money marketplace merchant services",
+          "language": "English",
+          "expected_evidence": "Comparable marketplace model, merchant services, take-rate and competition language."
+        },
+        {
+          "name": "JD annual reports and IR",
+          "locator_type": "search_query",
+          "locator": "JD.com annual report marketplace logistics low price merchant services",
+          "language": "English",
+          "expected_evidence": "Competitor logistics/supply-chain strengths and low-price positioning."
+        },
+        {
+          "name": "Amazon annual reports and marketplace seller policies",
+          "locator_type": "search_query",
+          "locator": "Amazon annual report third-party seller marketplace low price selection fulfillment",
+          "language": "English",
+          "expected_evidence": "Comparable marketplace scale, fulfillment, seller economics, and selection language."
+        },
+        {
+          "name": "Shein public materials",
+          "locator_type": "search_query",
+          "locator": "Shein marketplace supplier model low price cross-border ecommerce public report",
+          "language": "English",
+          "expected_evidence": "Private-company competitor context where reliable public material is available."
+        }
+      ],
+      "audit_notes": [
+        "Competitors should eventually run through the same financial and business-model workflow before final comparison.",
+        "Private-company competitor claims require stricter source-quality labels."
+      ]
+    },
+    {
+      "source_line_id": "regulatory_trade_reputation",
+      "name": "Regulatory, trade, and reputation risk",
+      "status": "planned",
+      "quality_tier": 1,
+      "source_types": [
+        "government",
+        "regulator",
+        "court_or_enforcement",
+        "consumer_protection"
+      ],
+      "hypothesis_ids": [
+        "pdd_h2_low_price_supply_chain_advantage",
+        "pdd_h5_trust_regulatory_and_quality_risk"
+      ],
+      "validation_role": "Test whether customs, de minimis rules, data/privacy, consumer protection, product safety, or enforcement issues could weaken the model.",
+      "planned_sources": [
+        {
+          "name": "U.S. customs and de minimis policy sources",
+          "locator_type": "search_query",
+          "locator": "site:cbp.gov de minimis ecommerce imports Temu PDD",
+          "language": "English",
+          "expected_evidence": "Official rule changes or enforcement context affecting cross-border low-price commerce."
+        },
+        {
+          "name": "FTC / consumer protection sources",
+          "locator_type": "search_query",
+          "locator": "site:ftc.gov Temu consumer protection refund privacy ecommerce",
+          "language": "English",
+          "expected_evidence": "Official actions, warnings, or policy context."
+        },
+        {
+          "name": "EU consumer protection / DSA / customs sources",
+          "locator_type": "search_query",
+          "locator": "site:ec.europa.eu Temu consumer protection Digital Services Act customs ecommerce",
+          "language": "English",
+          "expected_evidence": "Official EU regulatory context for marketplace obligations."
+        },
+        {
+          "name": "Chinese complaint and consumer platforms",
+          "locator_type": "search_query",
+          "locator": "黑猫投诉 拼多多 Temu 售后 退款 质量",
+          "language": "Chinese",
+          "expected_evidence": "Complaint patterns that need triangulation against stronger sources."
+        }
+      ],
+      "audit_notes": [
+        "Official regulator sources can support facts about rules/actions.",
+        "Complaint platforms show complaint patterns, not population-wide rates."
+      ]
+    },
+    {
+      "source_line_id": "independent_business_reporting",
+      "name": "Independent business reporting and free industry context",
+      "status": "planned",
+      "quality_tier": 2,
+      "source_types": [
+        "reputable_media",
+        "free_industry_reports",
+        "analyst_transcripts_when_public"
+      ],
+      "hypothesis_ids": [
+        "pdd_h1_buyer_merchant_network_effect",
+        "pdd_h2_low_price_supply_chain_advantage",
+        "pdd_h4_merchant_value_proposition",
+        "pdd_h5_trust_regulatory_and_quality_risk"
+      ],
+      "validation_role": "Provide context, contradictions, and leads for unit economics, platform strategy, merchant incentives, and regulation.",
+      "planned_sources": [
+        {
+          "name": "Reputable business media on Temu/PDD model",
+          "locator_type": "search_query",
+          "locator": "PDD Temu business model merchant economics supply chain low price reputable media",
+          "language": "English",
+          "expected_evidence": "Reported details and contradictions to official company framing."
+        },
+        {
+          "name": "Chinese business media and public industry analysis",
+          "locator_type": "search_query",
+          "locator": "拼多多 Temu 商业模式 商家 供应链 低价 行业 分析",
+          "language": "Chinese",
+          "expected_evidence": "Local-language business context and merchant/supply-chain detail."
+        }
+      ],
+      "audit_notes": [
+        "Media claims need source attribution and should not override official financial facts.",
+        "Free industry reports must expose methodology before being used for important claims."
+      ]
+    }
+  ],
+  "review_needed_decisions": [
+    {
+      "decision_id": "pdd_external_v1_no_live_scraping",
+      "decision": "V1 records external source lines and search tasks, but does not yet scrape or summarize public discussion automatically.",
+      "reason": "This prevents noisy low-quality sources from being promoted into moat conclusions before the audit policy is tested.",
+      "needs_user_review": false
+    },
+    {
+      "decision_id": "pdd_external_tier3_claim_limit",
+      "decision": "Tier 3 and Tier 4 sources may only create leads/patterns unless repeated across independent sources or supported by Tier 1/Tier 2 evidence.",
+      "reason": "Customer and merchant forums have selection bias and cannot safely prove important investment claims by themselves.",
+      "needs_user_review": true
+    },
+    {
+      "decision_id": "pdd_external_bilingual_scope",
+      "decision": "Use both English and Chinese source lines for PDD/Temu because customer, merchant, and competitor evidence differs by geography.",
+      "reason": "PDD spans Pinduoduo in China and Temu internationally, so English-only research would miss important merchant/customer evidence.",
+      "needs_user_review": false
+    },
+    {
+      "decision_id": "pdd_external_competitor_not_final",
+      "decision": "Competitor materials are source candidates here; final competitor comparison still requires each competitor to go through the same agent workflow.",
+      "reason": "A shortcut competitor scan is useful for leads but not enough for a final moat judgment.",
+      "needs_user_review": false
+    }
+  ],
+  "auditor_rules": [
+    "Do not use external sources for official financial numbers.",
+    "Do not make final moat conclusions from Tier 3 or Tier 4 sources alone.",
+    "Mark every external evidence item with source tier, source type, language, and whether it supports, contradicts, or only raises a question.",
+    "Important claims from low-quality sources require human review.",
+    "Contradictory evidence should be preserved rather than averaged away."
+  ]
+}

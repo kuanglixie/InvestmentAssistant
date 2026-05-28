@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "notes": "Manual valuation inputs are user-reviewed fallbacks. Implemented V1 companies may auto-fetch quote and FX data, then record validation results.",
+  "companies": {
+    "pdd": {
+      "as_of_date": null,
+      "currency": "USD",
+      "source": null,
+      "share_price": null,
+      "market_cap": null,
+      "ads_outstanding": null,
+      "ordinary_shares_per_ads": 4,
+      "usd_cny_fx": null,
+      "review_status": "missing"
+    },
+    "tencent": {
+      "as_of_date": null,
+      "currency": "HKD",
+      "source": null,
+      "share_price": null,
+      "market_cap": null,
+      "ordinary_shares_outstanding": null,
+      "hkd_cny_fx": null,
+      "review_status": "missing"
+    },
+    "google": {
+      "as_of_date": null,
+      "currency": "USD",
+      "source": null,
+      "share_price": null,
+      "market_cap": null,
+      "usd_cny_fx": null,
+      "review_status": "missing"
+    }
+  }
+}

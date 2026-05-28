@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "companies": [
+    {
+      "company_id": "pdd",
+      "legal_name": "PDD Holdings Inc.",
+      "common_names": [
+        "PDD",
+        "Pinduoduo",
+        "Temu parent company"
+      ],
+      "aliases": [
+        "PDD",
+        "PDD Holdings",
+        "Pinduoduo"
+      ],
+      "tickers": [
+        {
+          "symbol": "PDD",
+          "market": "us-adr",
+          "exchange": "NASDAQ"
+        }
+      ],
+      "market": "us-adr",
+      "listing_type": "ADR",
+      "sec_cik": 1737806,
+      "sec_cik_padded": "0001737806",
+      "primary_filing_systems": [
+        "SEC EDGAR",
+        "PDD investor relations"
+      ],
+      "investor_relations_url": "https://investor.pddholdings.com/",
+      "reporting_currency": "CNY",
+      "trading_currency": "USD",
+      "fiscal_year_end": "December 31",
+      "domicile": "Cayman Islands",
+      "main_operating_geography": "China and international e-commerce markets",
+      "source_languages": [
+        "English",
+        "Chinese"
+      ],
+      "structure_notes": [
+        "Chinese-origin company listed in the United States as an ADR.",
+        "Preserve ADR, holding-company, and operating-company context in reports."
+      ],
+      "source_pipeline_status": "implemented_for_sec_cache"
+    },
+    {
+      "company_id": "tencent",
+      "legal_name": "Tencent Holdings Limited",
+      "common_names": [
+        "Tencent",
+        "腾讯"
+      ],
+      "aliases": [
+        "Tencent",
+        "腾讯",
+        "0700.HK",
+        "00700"
+      ],
+      "tickers": [
+        {
+          "symbol": "0700.HK",
+          "market": "hk",
+          "exchange": "HKEX"
+        }
+      ],
+      "market": "hk",
+      "listing_type": "ordinary_share",
+      "sec_cik": null,
+      "primary_filing_systems": [
+        "HKEX disclosure",
+        "Tencent investor relations"
+      ],
+      "investor_relations_url": "https://www.tencent.com/en-us/investors.html",
+      "reporting_currency": "RMB",
+      "trading_currency": "HKD",
+      "fiscal_year_end": "December 31",
+      "domicile": "Cayman Islands",
+      "main_operating_geography": "China and global internet services",
+      "source_languages": [
+        "English",
+        "Chinese"
+      ],
+      "structure_notes": [
+        "Hong Kong listed Chinese internet holding company.",
+        "Use HKEX announcements and Tencent IR as official financial sources."
+      ],
+      "source_pipeline_status": "identity_only_v1"
+    },
+    {
+      "company_id": "alphabet",
+      "legal_name": "Alphabet Inc.",
+      "common_names": [
+        "Alphabet",
+        "Google"
+      ],
+      "aliases": [
+        "Alphabet",
+        "Google",
+        "GOOGL",
+        "GOOG"
+      ],
+      "tickers": [
+        {
+          "symbol": "GOOGL",
+          "market": "us",
+          "exchange": "NASDAQ"
+        },
+        {
+          "symbol": "GOOG",
+          "market": "us",
+          "exchange": "NASDAQ"
+        }
+      ],
+      "market": "us",
+      "listing_type": "common_stock",
+      "sec_cik": 1652044,
+      "sec_cik_padded": "0001652044",
+      "primary_filing_systems": [
+        "SEC EDGAR",
+        "Alphabet investor relations"
+      ],
+      "investor_relations_url": "https://abc.xyz/investor/",
+      "reporting_currency": "USD",
+      "trading_currency": "USD",
+      "fiscal_year_end": "December 31",
+      "domicile": "Delaware, United States",
+      "main_operating_geography": "Global internet, advertising, cloud, and technology markets",
+      "source_languages": [
+        "English"
+      ],
+      "structure_notes": [
+        "Alphabet is the listed parent company of Google.",
+        "Use Alphabet filings for official consolidated financials."
+      ],
+      "source_pipeline_status": "identity_only_v1"
+    }
+  ]
+}

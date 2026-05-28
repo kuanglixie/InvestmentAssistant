@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "formulas": [
+    {
+      "id": "owner_earnings_v1",
+      "name": "Owner Earnings",
+      "formula": "operating_cash_flow - stock_based_compensation - maintenance_capex",
+      "status": "candidate"
+    },
+    {
+      "id": "enterprise_value_v1",
+      "name": "Enterprise Value",
+      "formula": "market_capitalization + interest_bearing_debt - cash_and_cash_equivalents",
+      "status": "candidate"
+    },
+    {
+      "id": "true_yield_v1",
+      "name": "True Yield",
+      "formula": "owner_earnings / enterprise_value",
+      "status": "candidate"
+    },
+    {
+      "id": "cash_conversion_ratio_v1",
+      "name": "Cash Conversion Ratio",
+      "formula": "operating_cash_flow / net_income",
+      "status": "candidate"
+    },
+    {
+      "id": "one_dollar_test_5y_v1",
+      "name": "Five-Year One-Dollar Test",
+      "formula": "(ending_market_capitalization - beginning_market_capitalization) / five_year_total_retained_earnings",
+      "status": "candidate"
+    },
+    {
+      "id": "unlevered_roic_v1",
+      "name": "Unlevered ROIC",
+      "formula": "nopat / invested_capital",
+      "status": "candidate"
+    }
+  ]
+}
+

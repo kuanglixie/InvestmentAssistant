@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "created_from": "docs/requirements-answers-from-drive-notes.md",
+  "activation_policy": {
+    "default_status": "candidate",
+    "allowed_statuses": [
+      "candidate",
+      "approved",
+      "rejected",
+      "retired"
+    ],
+    "behavior_rule": "Only approved lessons may change agent behavior. Candidate lessons may be shown in reports as pending learning material."
+  },
+  "source_materials": [
+    {
+      "source_id": "drive_buffett_qualitative",
+      "title": "巴菲特定性分析",
+      "google_doc_id": "1zE5vyoSdJietIyXhP-LPvZ9j-yjN_IjIF3jrWqVkIjY",
+      "relevance": "Business quality, moat, management, circle of competence"
+    },
+    {
+      "source_id": "drive_buffett_quantitative",
+      "title": "巴菲特定量分析",
+      "google_doc_id": "1HuMWM24UbfNV8vmSOqKLY-8jV2-jxpM39wXRNo5IQf8",
+      "relevance": "Financial metrics, ROIC controversies, gross margin interpretation"
+    },
+    {
+      "source_id": "drive_financial_statement_methodology",
+      "title": "巴菲特财务报表分析方法论",
+      "google_doc_id": "1iLIyVMtzrEB3N2jRQfHAnhWjie_kbNZSRrN9b_hEaFs",
+      "relevance": "Owner earnings, ROIC, valuation caveats, accounting-to-economic bridge"
+    },
+    {
+      "source_id": "thread_value_investor_business_model_playbook",
+      "title": "Value Investor Business-Model Research Playbook",
+      "local_doc": "docs/value-investor-business-model-research-playbook.md",
+      "relevance": "Business-model research workflow, unit economics, moat durability, source hierarchy, primary research, scenario modeling"
+    },
+    {
+      "source_id": "thread_gemini_business_model_due_diligence_cn",
+      "title": "Gemini 商业模式尽职调查框架",
+      "local_doc": "docs/gemini-business-model-due-diligence-cn-notes.md",
+      "relevance": "Scuttlebutt, fieldwork, industry clusters, scale economies shared, expert networks, channel checks, compliance controls"
+    }
+  ],
+  "agent_lessons": {
+    "source_discovery": [
+      {
+        "lesson_id": "source_discovery_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Use official filings, company IR, and official exchange disclosures as primary sources for financial numbers.",
+        "control_note": "Unofficial sources can support qualitative research but cannot override official financial statements."
+      },
+      {
+        "lesson_id": "source_discovery_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "For Chinese and ADR companies, preserve listing, holding-company, operating-company, VIE, ADR, and exchange context before interpreting financial data.",
+        "control_note": "Identity ambiguity should be treated as a source-risk issue."
+      },
+      {
+        "lesson_id": "source_discovery_003",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Use a strict source hierarchy: official filings and regulator/exchange sources first, company-controlled public surfaces second, official public statistics third, then primary research, alternative data, and management follow-up.",
+        "control_note": "Vendor, forum, and management/IR follow-up sources should accelerate or clarify research, not replace original-source work."
+      },
+      {
+        "lesson_id": "source_discovery_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Distinguish desk research, channel checks, expert networks, scuttlebutt, and physical fieldwork as separate source types with different cost, information advantage, and compliance risk.",
+        "control_note": "Primary research sources should be used only for targeted questions and must carry source-quality and compliance labels."
+      }
+    ],
+    "financial_extraction": [
+      {
+        "lesson_id": "financial_extraction_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Treat accounting numbers as starting evidence, then preserve raw source tables and normalized facts separately.",
+        "control_note": "Do not overwrite raw facts with interpreted or adjusted facts."
+      },
+      {
+        "lesson_id": "financial_extraction_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "Flag accounting classification shifts, net-versus-gross revenue issues, one-time gains, subsidies, and investment income as possible quality-of-earnings issues.",
+        "control_note": "These flags require evidence from filings before they can become conclusions."
+      },
+      {
+        "lesson_id": "financial_extraction_003",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Normalize company KPIs into metric definition, company method, investor relevance, historical series, and failure mode.",
+        "control_note": "KPI definition changes should be preserved as audit evidence because they can affect comparability and trust."
+      }
+    ],
+    "financial_verification": [
+      {
+        "lesson_id": "financial_verification_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Material source conflicts should block confident conclusions until reconciled or explicitly accepted.",
+        "control_note": "The current materiality threshold is more than 2%, with clear rounding differences accepted."
+      }
+    ],
+    "metrics": [
+      {
+        "lesson_id": "metrics_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology",
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "Owner earnings should focus on cash that can accrue to owners after real maintenance needs and shareholder dilution costs.",
+        "control_note": "V1 uses OCF minus SBC minus D&A as a conservative placeholder until maintenance CapEx is better estimated."
+      },
+      {
+        "lesson_id": "metrics_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "ROIC is judgment-heavy and should disclose choices around cash, goodwill, R&D capitalization, tax rate, impairments, and beginning/average/ending invested capital.",
+        "control_note": "V1 calculates ROIC without applying any hard threshold."
+      },
+      {
+        "lesson_id": "metrics_003",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "Gross margin durability can support moat analysis, but margin changes need context around pricing power, utilization, product mix, and accounting classification.",
+        "control_note": "Gross margin should not be interpreted as moat evidence without business-model context."
+      },
+      {
+        "lesson_id": "metrics_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Business-model metrics should explain revenue quality, unit economics, retention/cohort health, pricing power, margin structure, capital intensity, cash conversion, ROIC, working-capital advantages, moat indicators, governance, and accounting trust.",
+        "control_note": "Metrics should be industry-relative and tied to source-linked assumptions, not universal thresholds."
+      }
+    ],
+    "business_model_moat": [
+      {
+        "lesson_id": "business_model_moat_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "Start with whether the business is understandable and inside the investor's circle of competence.",
+        "control_note": "Fast-changing technology alone is not a rejection reason if the business model and customer value proposition remain stable."
+      },
+      {
+        "lesson_id": "business_model_moat_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "A seriously interesting company should show durable customer value, pricing power or other franchise traits, high returns on capital, and low incremental capital needs.",
+        "control_note": "Financial signals should support, not replace, direct business-model evidence."
+      },
+      {
+        "lesson_id": "business_model_moat_003",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "Reject or heavily penalize commodity-like businesses without differentiation, pricing power, durable moat, or predictable long-term demand.",
+        "control_note": "This is a candidate screening rule, not an automatic rejection until approved."
+      },
+      {
+        "lesson_id": "business_model_moat_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Translate business-model narrative into an economic engine: who pays, why they pay, what it costs to acquire and serve them, why they stay, capital consumed, and owner cash generated through a cycle.",
+        "control_note": "The agent should not treat a better company description as sufficient business-model understanding."
+      },
+      {
+        "lesson_id": "business_model_moat_005",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Evaluate business-model clarity, economic viability, durability, capital efficiency, governance quality, accounting trustworthiness, and valuation sufficiency as decision criteria.",
+        "control_note": "Each criterion needs source-linked evidence and should be industry-relative."
+      },
+      {
+        "lesson_id": "business_model_moat_006",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Escalate research in ROI order: filing/accounting deep dive, unit economics, industry and competitor map, scenario/reverse DCF, governance, product tests, interviews, fieldwork, alternative data, then management follow-up.",
+        "control_note": "External research should target valuation-relevant unknowns left unresolved by filings and modeling."
+      },
+      {
+        "lesson_id": "business_model_moat_007",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "A business-model report should explicitly answer customer value proposition, unit economics, return protection, management capital allocation, and what could break the model quickly.",
+        "control_note": "If these cannot be answered with confidence, intrinsic value may be hard to estimate."
+      },
+      {
+        "lesson_id": "business_model_moat_008",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Analyze moat in two layers: industry structure and company-specific value creation, including profit pools, entry barriers, substitution risk, value-chain position, cost advantage, intangible assets, and execution skill.",
+        "control_note": "The agent should not judge a company moat without first identifying whether the industry itself allows durable excess returns."
+      },
+      {
+        "lesson_id": "business_model_moat_009",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Treat scale economies shared as a testable moat hypothesis: scale lowers unit cost, management reinvests savings into customer value, lower prices increase volume, and higher volume deepens the cost advantage.",
+        "control_note": "For PDD/Temu-like models, this is a hypothesis requiring customer, merchant, supplier, and competitor evidence before becoming a conclusion."
+      },
+      {
+        "lesson_id": "business_model_moat_010",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Use desk research and modeling to identify precise knowledge gaps before deploying expensive fieldwork or expert calls.",
+        "control_note": "Fieldwork should start from model-sensitive hypotheses, not broad curiosity."
+      }
+    ],
+    "leadership_people": [
+      {
+        "lesson_id": "leadership_people_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "Evaluate whether management behaves like owner-partners through integrity, clarity, incentives, capital allocation, and per-share value creation.",
+        "control_note": "Leadership judgments from interviews or media require source-quality labels."
+      },
+      {
+        "lesson_id": "leadership_people_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "Careless dilution, weak communication, or capital allocation that destroys per-share value should trigger leadership review.",
+        "control_note": "Evidence should come from filings, share-count history, compensation disclosures, and management communications."
+      },
+      {
+        "lesson_id": "leadership_people_003",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Proxy, governance, and capital-allocation review should test whether incentives reward per-share value creation, ROIC, cash flow, and rational reinvestment rather than raw size.",
+        "control_note": "Management and IR follow-up should clarify narrow source-linked questions, not create the initial thesis."
+      },
+      {
+        "lesson_id": "leadership_people_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "When evaluating scale-economies-shared businesses, test whether management is truly willing to reinvest scale benefits into customer value rather than harvest short-term margin.",
+        "control_note": "Evidence should come from pricing history, margin behavior, capital allocation language, and competitor/customer observations."
+      }
+    ],
+    "valuation": [
+      {
+        "lesson_id": "valuation_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Valuation should avoid false precision and focus on a range of owner cash flows that are predictable enough to matter.",
+        "control_note": "Important valuation assumptions require approval before they drive conclusions."
+      },
+      {
+        "lesson_id": "valuation_002",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Enterprise value that subtracts all cash must flag that some cash may not be excess, freely distributable, or practically usable by owners.",
+        "control_note": "V1 subtracts all cash but must show this limitation."
+      },
+      {
+        "lesson_id": "valuation_003",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "True yield and owner earnings yield should be compared with long-term bond yields only after business quality and cash-flow durability are understood.",
+        "control_note": "No price conclusion should be produced without scenario assumptions."
+      },
+      {
+        "lesson_id": "valuation_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Margin of safety should come after valuation and risk assessment; it should widen when unit economics, capital needs, or moat durability are more uncertain.",
+        "control_note": "A fixed margin-of-safety rule should not substitute for scenario modeling and downside appraisal."
+      }
+    ],
+    "customer_happiness": [
+      {
+        "lesson_id": "customer_happiness_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative"
+        ],
+        "lesson": "Customer and partner reception can support moat analysis by revealing switching costs, trust, repeat usage, product quality, and brand strength.",
+        "control_note": "Social, forum, video, and review sources need source-quality labels and cannot be used as primary financial sources."
+      },
+      {
+        "lesson_id": "customer_happiness_002",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Customer, supplier, distributor, former-employee, and competitor evidence should focus on behavior and economics: why customers buy, what alternatives exist, what causes switching, and who has bargaining power.",
+        "control_note": "Anecdotes should not become thesis-critical evidence unless triangulated across independent sources."
+      },
+      {
+        "lesson_id": "customer_happiness_003",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Structure scuttlebutt around customers, suppliers/distributors/dealers, competitors, and former employees because each group reveals a different part of moat durability.",
+        "control_note": "Competitor criticism is noisy, but grudging competitor respect can be a meaningful moat signal when independently corroborated."
+      },
+      {
+        "lesson_id": "customer_happiness_004",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "For tangible or operationally complex businesses, product tests, store/site visits, factory checks, logistics-node checks, and industry-cluster visits can validate whether the business model works in physical reality.",
+        "control_note": "Field observations should be timestamped, source-linked, and mapped back to a specific hypothesis or valuation assumption."
+      }
+    ],
+    "competitor_comparison": [
+      {
+        "lesson_id": "competitor_comparison_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_buffett_qualitative",
+          "drive_buffett_quantitative"
+        ],
+        "lesson": "Compare competitors only after each company has gone through a comparable workflow for sources, financials, business model, people, and valuation context.",
+        "control_note": "Side-by-side metrics should disclose accounting-standard and reporting-segment differences."
+      },
+      {
+        "lesson_id": "competitor_comparison_002",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Competitor research should map both industry structure and company-specific advantages, including whether rivals can copy the cost structure, product architecture, distribution, or operating culture.",
+        "control_note": "Rival claims need bias labels and should be triangulated before being used as moat evidence."
+      }
+    ],
+    "report_builder": [
+      {
+        "lesson_id": "report_builder_001",
+        "status": "candidate",
+        "source_ids": [
+          "drive_financial_statement_methodology"
+        ],
+        "lesson": "Reports should distinguish facts, calculations, interpretations, unresolved issues, and human-review gates.",
+        "control_note": "The final checklist should map to right business model, right people, and right price."
+      },
+      {
+        "lesson_id": "report_builder_002",
+        "status": "candidate",
+        "source_ids": [
+          "thread_value_investor_business_model_playbook"
+        ],
+        "lesson": "Every major claim should be traceable to a source, evidence type, confidence score, failure mode, and valuation relevance.",
+        "control_note": "The main report should not bury the decision criteria; detailed source linkage belongs in the data-linkage appendix."
+      },
+      {
+        "lesson_id": "report_builder_003",
+        "status": "candidate",
+        "source_ids": [
+          "thread_gemini_business_model_due_diligence_cn"
+        ],
+        "lesson": "Primary research, expert-network, channel-check, and alternative-data evidence should include compliance/MNPI risk flags and a record of whether the evidence is public, non-material, or requires human review.",
+        "control_note": "The system should not encourage use of confidential or material nonpublic information."
+      }
+    ]
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "status": "earnings_call_transcript_provider_chain_v1",
+  "scope": "Productionized provider-chain registry for PDD earnings-call transcripts. This replaces the older webcast/YouTube/Gemini-specific official-event collector for this agent.",
+  "company_id": "pdd",
+  "prototype_adopted_from": "/Users/ajing/Documents/Codex/2026-05-25/langchain-investment-prototypes/prototypes/earnings-call-transcripts",
+  "provider_chain": [
+    "alpha_vantage_api",
+    "local_or_user_provided_transcript",
+    "link_only_source_candidates"
+  ],
+  "audit_policy": {
+    "source_of_record_rule": "Use SEC filings, official annual reports, official earnings releases, and company IR filings as source of record for reported financial numbers. Use earnings-call transcripts for management commentary, Q&A, and strategy framing.",
+    "third_party_transcript_rule": "Alpha Vantage transcript records are allowed as cached provider evidence under the configured API/source policy, but redistribution rights must be reviewed before copying text outside this system.",
+    "third_party_web_rule": "StockAnalysis, Motley Fool, Seeking Alpha, Benzinga, Quartr, and similar third-party web pages are link-only candidates unless storage rights are confirmed.",
+    "local_transcript_rule": "A local transcript can be ingested only with provider/source type/confidence/license metadata.",
+    "no_fabrication_rule": "Never invent missing transcript text. If the provider is rate-limited or a quarter is missing, record the missing quarter and source candidates."
+  },
+  "sources": [
+    {
+      "source_id": "pdd_alpha_vantage_earnings_call_backfill",
+      "name": "PDD Alpha Vantage earnings-call transcript backfill",
+      "adapter": "alpha_vantage_backfill",
+      "provider": "alpha_vantage",
+      "platform": "alpha_vantage_api",
+      "symbol": "PDD",
+      "company_name": "PDD Holdings Inc.",
+      "start_quarter": "2018Q3",
+      "end_quarter": "2026Q1",
+      "newest_first": true,
+      "stop_on_rate_limit": true,
+      "require_all": false,
+      "timeout": 30,
+      "sleep_seconds": 13.0,
+      "max_requests_per_run": 0,
+      "source_quality_tier": 2,
+      "cached_record_globs": [
+        "data/raw/official_event_transcripts/pdd/alpha_vantage/*/record.json"
+      ],
+      "license_notes": "Review Alpha Vantage terms for your intended storage and redistribution use before production export.",
+      "use_case_tags": [
+        "earnings_call_transcript",
+        "business_model_questions",
+        "management_q_and_a"
+      ]
+    },
+    {
+      "source_id": "pdd_local_earnings_call_transcript_intake",
+      "name": "PDD local/user-provided earnings-call transcript intake",
+      "adapter": "local_transcript_file",
+      "provider": "local_transcript",
+      "platform": "local_file",
+      "symbol": "PDD",
+      "company_name": "PDD Holdings Inc.",
+      "quarter": "",
+      "local_transcript_path": "",
+      "source_type": "local_user_provided_transcript",
+      "confidence": "medium",
+      "is_official": false,
+      "is_machine_generated": false,
+      "can_store": true,
+      "can_redistribute": false,
+      "source_quality_tier": 2,
+      "license_notes": "Fill quarter/path/source metadata before use. Do not ingest copied third-party text unless storage rights are confirmed.",
+      "use_case_tags": [
+        "manual_transcript_ingest",
+        "earnings_call_transcript"
+      ]
+    },
+    {
+      "source_id": "pdd_earnings_call_source_candidates",
+      "name": "PDD earnings-call transcript source candidates",
+      "adapter": "source_candidates",
+      "provider": "source_candidate_registry",
+      "platform": "link_registry",
+      "source_quality_tier": "2-4_by_provider",
+      "cached_candidate_globs": [
+        "data/raw/official_event_transcripts/pdd/source_candidates/*/source_candidates.json"
+      ],
+      "policy": {
+        "storage": "link_only_by_default",
+        "copy_full_text": "only_when_license_or_user_provided_source_allows_storage"
+      },
+      "candidates": [
+        {
+          "provider": "stockanalysis",
+          "source_type": "third_party_web",
+          "access_type": "public_web_page",
+          "source_url": "https://stockanalysis.com/stocks/pdd/transcripts/",
+          "can_store": null,
+          "can_redistribute": false,
+          "license_notes": "Use as discovery/source-candidate link only unless storage rights are confirmed."
+        },
+        {
+          "provider": "motley_fool",
+          "source_type": "third_party_web",
+          "access_type": "public_web_page",
+          "source_url": "https://www.fool.com/quote/nasdaq/pdd/",
+          "can_store": null,
+          "can_redistribute": false,
+          "license_notes": "Use as discovery/source-candidate link only unless storage rights are confirmed."
+        },
+        {
+          "provider": "seeking_alpha",
+          "source_type": "third_party_web",
+          "access_type": "registration_or_paywall",
+          "source_url": "https://seekingalpha.com/symbol/PDD/earnings/transcripts",
+          "can_store": null,
+          "can_redistribute": false,
+          "license_notes": "Likely access restrictions. Use manually only if account/license permits."
+        },
+        {
+          "provider": "quartr",
+          "source_type": "third_party_app_or_api",
+          "access_type": "app_or_api",
+          "source_url": "https://quartr.com/",
+          "can_store": null,
+          "can_redistribute": false,
+          "license_notes": "Requires separate app/API workflow and terms review."
+        },
+        {
+          "provider": "pdd_ir",
+          "source_type": "company_ir",
+          "access_type": "public_ir_site",
+          "source_url": "https://investor.pddholdings.com/",
+          "can_store": null,
+          "can_redistribute": false,
+          "license_notes": "Official IR source. Store transcript text only if an official transcript/file is available and permitted."
+        }
+      ]
+    }
+  ]
+}

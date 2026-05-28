@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "default_keyword_suffixes": ["", "review", "refund", "scam", "coupon", "haul"],
+  "negative_keyword_topics": {
+    "refund": ["refund", "return", "customer service"],
+    "shipping": ["shipping", "delivery", "late", "lost package"],
+    "quality": ["quality", "broken", "fake", "cheap"],
+    "scam": ["scam", "fraud", "unsafe"],
+    "repeat_purchase": ["buy again", "reorder", "repeat purchase"]
+  },
+  "stable_metric_names": [
+    "demand.search.google_trends.brand",
+    "demand.search.google_trends.refund",
+    "demand.social.youtube.video_count",
+    "demand.social.youtube.view_count",
+    "demand.social.reddit.post_count",
+    "demand.app.rank.shopping",
+    "demand.app.review_count",
+    "value.price.median",
+    "value.discount.median_pct",
+    "value.coupon.intensity",
+    "value.delivery.median_days",
+    "trust.rating.average",
+    "trust.review.count",
+    "trust.negative_keyword.refund",
+    "trust.negative_keyword.scam",
+    "trust.negative_keyword.shipping",
+    "competition.price_gap_vs_amazon",
+    "competition.price_gap_vs_shein",
+    "competition.delivery_gap_vs_amazon"
+  ]
+}

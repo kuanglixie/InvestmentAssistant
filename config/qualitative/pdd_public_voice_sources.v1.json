@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "company_id": "pdd",
+  "status": "public_voice_v1",
+  "scope": "Public customer, merchant, creator, complaint, and investor discussions for PDD/Pinduoduo/Temu moat validation.",
+  "audit_policy": {
+    "source_tier": 3,
+    "evidence_role": "lead_or_pattern_evidence_only",
+    "important_claim_rule": "Important investment claims from forums/comments require human review and triangulation with stronger sources.",
+    "financial_number_rule": "Do not use forum/comment sources for official financial numbers.",
+    "bias_note": "Forum and review sources overrepresent strong positive or negative experiences."
+  },
+  "theme_keywords": {
+    "product_quality": [
+      "quality",
+      "cheap",
+      "broken",
+      "fake",
+      "counterfeit",
+      "not as described",
+      "defective",
+      "material",
+      "durable",
+      "trash",
+      "good value"
+    ],
+    "shipping_delivery": [
+      "shipping",
+      "delivery",
+      "arrived",
+      "late",
+      "package",
+      "tracking",
+      "logistics"
+    ],
+    "refund_customer_service": [
+      "refund",
+      "return",
+      "customer service",
+      "support",
+      "chargeback",
+      "dispute",
+      "account suspended",
+      "banned"
+    ],
+    "repeat_purchase_loyalty": [
+      "again",
+      "repeat",
+      "ordered",
+      "buying",
+      "loyal",
+      "habit",
+      "addicted"
+    ],
+    "trust_safety": [
+      "scam",
+      "privacy",
+      "data",
+      "safe",
+      "trust",
+      "fraud",
+      "malware",
+      "suspicious"
+    ],
+    "merchant_seller_economics": [
+      "seller",
+      "merchant",
+      "fees",
+      "profit",
+      "fine",
+      "penalty",
+      "returns",
+      "ads",
+      "margin",
+      "seller center"
+    ],
+    "value_for_money": [
+      "value",
+      "price",
+      "deal",
+      "bargain",
+      "worth",
+      "cheap",
+      "discount"
+    ]
+  },
+  "sources": [
+    {
+      "source_id": "reddit_temu_customer_discussions",
+      "name": "Reddit Temu customer discussions",
+      "adapter": "reddit_public_json",
+      "status": "collectable_when_network_available",
+      "quality_tier": 3,
+      "voice_type": "customer",
+      "language": "English",
+      "queries": [
+        "Temu quality shipping refund",
+        "Temu scam refund quality",
+        "Temu repeat purchase",
+        "Temu customer service",
+        "Temu seller fees profit",
+        "Temu product quality not as described",
+        "Temu refund return account suspended",
+        "Temu delivery tracking late package",
+        "Temu privacy data malware app",
+        "Temu worth it repeat purchase",
+        "Temu free gifts promotion",
+        "Temu fake counterfeit product",
+        "Temu merchant seller penalty returns",
+        "Temu seller profit margin",
+        "Temu haul quality Reddit"
+      ],
+      "subreddit_queries": [
+        {
+          "subreddit": "TemuThings",
+          "query": "refund return quality shipping scam",
+          "posts_per_query": 8
+        },
+        {
+          "subreddit": "temu",
+          "query": "quality refund shipping customer service",
+          "posts_per_query": 8
+        },
+        {
+          "subreddit": "temusellercenter",
+          "query": "seller fees returns penalties profit",
+          "posts_per_query": 8
+        },
+        {
+          "subreddit": "ecommerce",
+          "query": "Temu seller fees profit",
+          "posts_per_query": 6
+        },
+        {
+          "subreddit": "Scams",
+          "query": "Temu scam refund privacy",
+          "posts_per_query": 6
+        }
+      ],
+      "limits": {
+        "posts_per_query": 8,
+        "comments_per_post": 40,
+        "max_evidence_items": 250,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Reddit overrepresents strong opinions and complaint-driven posts.",
+        "Subreddit culture may shape tone and claims."
+      ]
+    },
+    {
+      "source_id": "trustpilot_temu_reviews",
+      "name": "Trustpilot Temu reviews",
+      "adapter": "web_reader_public_page",
+      "status": "collectable_when_network_available",
+      "quality_tier": 3,
+      "voice_type": "customer_review",
+      "language": "English",
+      "url": "https://www.trustpilot.com/review/temu.com",
+      "search_locator": "Trustpilot Temu reviews quality refund shipping",
+      "limits": {
+        "max_evidence_items": 35,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Public review sites often overrepresent complaints.",
+        "Review authenticity and sampling bias require caution."
+      ]
+    },
+    {
+      "source_id": "bbb_temu_complaints",
+      "name": "BBB Temu complaints",
+      "adapter": "web_reader_public_page",
+      "status": "collectable_when_network_available",
+      "quality_tier": 3,
+      "voice_type": "customer_complaint",
+      "language": "English",
+      "url": "https://www.bbb.org/us/ma/boston/profile/online-shopping/temucom-0021-553943/complaints",
+      "search_locator": "BBB Temu complaints refund shipping customer service",
+      "limits": {
+        "max_evidence_items": 35,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Complaint sites show issue patterns, not population-wide complaint rates."
+      ]
+    },
+    {
+      "source_id": "sitejabber_temu_reviews",
+      "name": "Sitejabber Temu reviews",
+      "adapter": "web_reader_public_page",
+      "status": "collectable_when_network_available",
+      "quality_tier": 3,
+      "voice_type": "customer_review",
+      "language": "English",
+      "url": "https://www.sitejabber.com/reviews/temu.com",
+      "parser": "sitejabber_reviews",
+      "search_locator": "Sitejabber Temu reviews refund shipping quality",
+      "limits": {
+        "max_evidence_items": 35,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Review sites may have selection and authenticity bias."
+      ]
+    },
+    {
+      "source_id": "youtube_temu_comments",
+      "name": "YouTube Temu review comments",
+      "adapter": "platform_api_or_manual_urls_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 4,
+      "voice_type": "customer_creator_commentary",
+      "language": "English",
+      "search_locator": "YouTube Temu review quality shipping refund comments",
+      "bias_risks": [
+        "Creator incentives and video selection bias can dominate comment themes."
+      ]
+    },
+    {
+      "source_id": "bilibili_temu_pinduoduo_comments",
+      "name": "Bilibili Temu / Pinduoduo comments",
+      "adapter": "platform_api_or_manual_urls_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 4,
+      "voice_type": "customer_creator_commentary",
+      "language": "Chinese",
+      "search_locator": "Bilibili Temu 拼多多 质量 退款 物流 评论",
+      "bias_risks": [
+        "Video-comment sentiment depends heavily on creator framing and audience."
+      ]
+    },
+    {
+      "source_id": "zhihu_pinduoduo_temu_discussions",
+      "name": "Zhihu Pinduoduo / Temu discussions",
+      "adapter": "manual_url_or_search_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 3,
+      "voice_type": "customer_or_merchant_discussion",
+      "language": "Chinese",
+      "search_locator": "知乎 拼多多 Temu 质量 退款 商家 利润",
+      "bias_risks": [
+        "Answer quality varies; high-engagement answers may not be representative."
+      ]
+    },
+    {
+      "source_id": "xiaohongshu_pinduoduo_temu_discussions",
+      "name": "Xiaohongshu Pinduoduo / Temu discussions",
+      "adapter": "manual_url_or_search_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 3,
+      "voice_type": "customer_discussion",
+      "language": "Chinese",
+      "search_locator": "小红书 拼多多 Temu 质量 退款 物流 购物体验",
+      "bias_risks": [
+        "Lifestyle-platform posts can include creator or affiliate incentives."
+      ]
+    },
+    {
+      "source_id": "heimao_pinduoduo_temu_complaints",
+      "name": "黑猫投诉 Pinduoduo / Temu complaints",
+      "adapter": "manual_url_or_search_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 3,
+      "voice_type": "customer_complaint",
+      "language": "Chinese",
+      "search_locator": "黑猫投诉 拼多多 Temu 售后 退款 质量",
+      "bias_risks": [
+        "Complaint platforms identify complaint categories but not complaint rates."
+      ]
+    },
+    {
+      "source_id": "xueqiu_pdd_investor_discussions",
+      "name": "雪球 PDD investor discussions",
+      "adapter": "manual_url_or_search_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 3,
+      "voice_type": "investor_discussion",
+      "language": "Chinese",
+      "search_locator": "雪球 PDD 拼多多 Temu 商业模式 护城河",
+      "bias_risks": [
+        "Investor forums mix evidence, speculation, price anchoring, and position bias."
+      ]
+    },
+    {
+      "source_id": "seller_forums_temu",
+      "name": "Temu seller / ecommerce merchant forums",
+      "adapter": "manual_url_or_search_required",
+      "status": "planned_manual_url_required",
+      "quality_tier": 3,
+      "voice_type": "merchant",
+      "language": "English_or_Chinese",
+      "search_locator": "Temu seller forum fees profit returns penalty logistics merchant",
+      "bias_risks": [
+        "Seller forums may overrepresent dissatisfied merchants.",
+        "Anonymous seller claims require corroboration."
+      ]
+    },
+    {
+      "source_id": "temu_seller_center_official",
+      "name": "Temu Seller Center official public page",
+      "adapter": "web_reader_public_page",
+      "status": "collectable_when_network_available",
+      "quality_tier": 1,
+      "voice_type": "merchant_official_rules",
+      "language": "English",
+      "url": "https://seller.temu.com/",
+      "search_locator": "Temu Seller Center official seller registration fees logistics returns",
+      "limits": {
+        "max_evidence_items": 25,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Official seller pages describe platform rules and claims, not independent merchant profitability."
+      ]
+    },
+    {
+      "source_id": "temu_support_shipping_returns",
+      "name": "Temu official customer support shipping and returns page",
+      "adapter": "web_reader_public_page",
+      "status": "collectable_when_network_available",
+      "quality_tier": 1,
+      "voice_type": "customer_official_policy",
+      "language": "English",
+      "url": "https://www.temu.com/support/c2/shipping-f-2.html",
+      "search_locator": "Temu official shipping return refund policy",
+      "limits": {
+        "max_evidence_items": 25,
+        "rate_limit_seconds": 1.5
+      },
+      "bias_risks": [
+        "Official support pages define policy but do not measure customer happiness or seller economics."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "financial_numbers": {
+    "allowed_primary": [
+      "sec_filing",
+      "sec_xbrl_companyfacts",
+      "company_investor_relations",
+      "hkex_disclosure",
+      "official_exchange_disclosure"
+    ],
+    "allowed_secondary": [
+      "reputable_free_financial_database"
+    ],
+    "disallowed_as_primary": [
+      "yahoo_finance",
+      "reddit",
+      "youtube",
+      "bilibili",
+      "social_media",
+      "blogs",
+      "forums"
+    ]
+  },
+  "qualitative_research": {
+    "allowed": [
+      "company_filings",
+      "earnings_calls",
+      "shareholder_letters",
+      "interviews",
+      "youtube",
+      "bilibili",
+      "reddit",
+      "forums",
+      "app_reviews",
+      "app_store_aggregates",
+      "official_seller_pages",
+      "merchant_forums",
+      "complaint_platforms",
+      "review_sites",
+      "investor_forums",
+      "video_comments",
+      "seller_communities",
+      "government",
+      "regulator",
+      "competitor_filings",
+      "reputable_media",
+      "free_industry_reports"
+    ],
+    "require_source_quality_label": true
+  },
+  "source_hierarchy": {
+    "us_companies": [
+      "SEC EDGAR filings",
+      "company investor relations",
+      "official annual and quarterly reports",
+      "reputable free financial databases for sanity checks only"
+    ],
+    "hong_kong_companies": [
+      "HKEX disclosures",
+      "company investor relations",
+      "official annual and interim reports",
+      "reputable free financial databases for sanity checks only"
+    ],
+    "mainland_china_companies": [
+      "official exchange disclosures",
+      "company investor relations",
+      "CNINFO / 巨潮资讯 where applicable",
+      "reputable free financial databases for sanity checks only"
+    ]
+  }
+}

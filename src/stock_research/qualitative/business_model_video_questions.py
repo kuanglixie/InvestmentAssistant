@@ -1,0 +1,617 @@
+from __future__ import annotations
+
+from collections import Counter
+from typing import Any
+
+
+BUSINESS_MODEL_VIDEO_QUESTIONS = [
+    {
+        "question_id": "customer_value_proposition",
+        "question": "What customer value proposition does management emphasize, and why should customers choose this platform over alternatives?",
+        "terms": [
+            "consumer",
+            "customer",
+            "buyer",
+            "value-for-money",
+            "value for money",
+            "quality",
+            "trust",
+            "savings",
+            "消费者",
+            "用户",
+            "客户",
+            "买家",
+            "性价比",
+            "省钱",
+            "质量",
+            "品质",
+            "信任",
+        ],
+    },
+    {
+        "question_id": "customer_behavior_and_retention",
+        "question": "What does management say about customer behavior, retention, repeat purchase, engagement, frequency, or changing user needs?",
+        "terms": [
+            "consumer",
+            "customer",
+            "buyer",
+            "retention",
+            "engagement",
+            "repeat",
+            "frequency",
+            "user needs",
+            "shopping experience",
+            "消费者",
+            "用户",
+            "买家",
+            "留存",
+            "复购",
+            "粘性",
+            "频次",
+            "用户需求",
+            "购物体验",
+        ],
+    },
+    {
+        "question_id": "merchant_value_and_roi",
+        "question": "What does management say about merchant value, merchant support, or merchant ROI?",
+        "terms": [
+            "merchant",
+            "seller",
+            "ecosystem",
+            "fee",
+            "commission",
+            "support",
+            "supply chain",
+            "ROI",
+            "商家",
+            "卖家",
+            "供应商",
+            "生态",
+            "费用",
+            "佣金",
+            "扶持",
+            "支持",
+            "供应链",
+            "投入产出",
+        ],
+    },
+    {
+        "question_id": "merchant_profitability_and_sustainability",
+        "question": "What does management imply about whether merchants can earn sustainable profits after platform fees, advertising, logistics, returns, and price competition?",
+        "terms": [
+            "merchant",
+            "seller",
+            "profit",
+            "profitability",
+            "fee",
+            "advertising",
+            "logistics",
+            "return",
+            "competition",
+            "商家",
+            "卖家",
+            "利润",
+            "赚钱",
+            "盈利",
+            "费用",
+            "广告",
+            "物流",
+            "退货",
+            "竞争",
+        ],
+    },
+    {
+        "question_id": "revenue_engine",
+        "question": "What does the call imply about the revenue engine and monetization drivers?",
+        "terms": [
+            "online marketing",
+            "transaction services",
+            "revenue",
+            "monetization",
+            "advertising",
+            "merchant services",
+            "收入",
+            "营收",
+            "变现",
+            "广告",
+            "交易服务",
+            "佣金",
+            "商家服务",
+        ],
+    },
+    {
+        "question_id": "monetization_take_rate_ads_and_fees",
+        "question": "What does management say or imply about advertising, transaction services, take rate, fee reductions, subsidies, or monetization intensity?",
+        "terms": [
+            "online marketing",
+            "advertising",
+            "transaction services",
+            "take rate",
+            "fees",
+            "fee reductions",
+            "subsidies",
+            "广告",
+            "交易服务",
+            "费率",
+            "扣点",
+            "抽佣",
+            "费用",
+            "降费",
+            "补贴",
+        ],
+    },
+    {
+        "question_id": "unit_economics_and_kpis",
+        "question": "What operating KPIs or unit-economics proxies are mentioned or implied, such as orders, active buyers, merchants, spend, retention, logistics cost, or merchant ROI?",
+        "terms": [
+            "orders",
+            "active buyers",
+            "merchants",
+            "spend",
+            "retention",
+            "logistics cost",
+            "ROI",
+            "unit economics",
+            "GMV",
+            "订单",
+            "活跃买家",
+            "月活",
+            "商家",
+            "消费",
+            "客单价",
+            "留存",
+            "物流成本",
+            "投入产出",
+            "单位经济",
+        ],
+    },
+    {
+        "question_id": "cost_structure_and_margin_drivers",
+        "question": "What does management say about cost structure, margins, sales and marketing, R&D, fulfillment/logistics, subsidies, or operating leverage?",
+        "terms": [
+            "margin",
+            "cost",
+            "sales and marketing",
+            "R&D",
+            "research and development",
+            "fulfillment",
+            "logistics",
+            "operating leverage",
+            "成本",
+            "毛利率",
+            "利润率",
+            "销售费用",
+            "市场费用",
+            "研发",
+            "履约",
+            "物流",
+            "补贴",
+            "经营杠杆",
+        ],
+    },
+    {
+        "question_id": "investment_phase_and_costs",
+        "question": "What investments are management prioritizing, and what cost or margin pressure do they accept?",
+        "terms": [
+            "investment",
+            "invest",
+            "margin",
+            "profitability",
+            "sales and marketing",
+            "R&D",
+            "research and development",
+            "投入",
+            "投资",
+            "长期",
+            "利润率",
+            "盈利",
+            "市场费用",
+            "研发",
+            "补贴",
+        ],
+    },
+    {
+        "question_id": "supply_chain_operating_model",
+        "question": "What does management say about supply-chain efficiency, manufacturing, agriculture, direct-from-source models, logistics partners, or industry-chain upgrades?",
+        "terms": [
+            "supply chain",
+            "manufacturing",
+            "agriculture",
+            "source",
+            "logistics",
+            "industry chain",
+            "farmers",
+            "partners",
+            "供应链",
+            "制造",
+            "农业",
+            "农产品",
+            "产地",
+            "源头",
+            "产业带",
+            "物流",
+            "农户",
+            "合作伙伴",
+        ],
+    },
+    {
+        "question_id": "fulfillment_quality_trust",
+        "question": "What does the call reveal about quality control, fulfillment, logistics, returns, after-sales service, counterfeit risk, or customer trust?",
+        "terms": [
+            "quality",
+            "fulfillment",
+            "logistics",
+            "delivery",
+            "return",
+            "counterfeit",
+            "trust",
+            "service quality",
+            "品质",
+            "质量",
+            "履约",
+            "物流",
+            "发货",
+            "交付",
+            "退货",
+            "售后",
+            "假货",
+            "信任",
+            "平台治理",
+        ],
+    },
+    {
+        "question_id": "pinduoduo_domestic_model",
+        "question": "What does management say specifically about Pinduoduo's domestic China model, including value-for-money, agriculture, merchant ecosystem, competition, and growth priorities?",
+        "terms": [
+            "Pinduoduo",
+            "domestic",
+            "China",
+            "agriculture",
+            "merchant",
+            "value-for-money",
+            "competition",
+            "拼多多",
+            "国内",
+            "中国",
+            "农业",
+            "商家",
+            "性价比",
+            "竞争",
+        ],
+    },
+    {
+        "question_id": "temu_global_model",
+        "question": "What does management say about Temu, global expansion, cross-border commerce, overseas consumers, local operations, trade/tariff issues, or international logistics?",
+        "terms": [
+            "Temu",
+            "global",
+            "cross-border",
+            "international",
+            "overseas",
+            "local fulfillment",
+            "tariff",
+            "trade",
+            "跨境",
+            "全球",
+            "海外",
+            "国际",
+            "本地履约",
+            "关税",
+            "贸易",
+        ],
+    },
+    {
+        "question_id": "pinduoduo_vs_temu_model_comparison",
+        "question": "What similarities and differences does management imply between Pinduoduo and Temu's business models, customers, merchants, economics, risks, or growth stage?",
+        "terms": [
+            "Pinduoduo",
+            "Temu",
+            "global",
+            "domestic",
+            "merchant",
+            "business model",
+            "growth stage",
+            "risk",
+            "拼多多",
+            "全球",
+            "国内",
+            "海外",
+            "商家",
+            "商业模式",
+            "增长阶段",
+            "风险",
+        ],
+    },
+    {
+        "question_id": "flywheel_and_network_effects",
+        "question": "Does management describe a buyer-merchant flywheel, network effect, scale advantage, data advantage, or self-reinforcing ecosystem dynamic?",
+        "terms": [
+            "flywheel",
+            "network",
+            "scale",
+            "ecosystem",
+            "data",
+            "consumer insights",
+            "virtuous cycle",
+            "飞轮",
+            "网络效应",
+            "规模",
+            "生态",
+            "数据",
+            "洞察",
+            "正循环",
+            "良性循环",
+        ],
+    },
+    {
+        "question_id": "moat_evidence",
+        "question": "What evidence in the call supports a moat hypothesis: cost advantage, switching cost, network density, brand/trust, data advantage, supply-chain efficiency, or scale economics?",
+        "terms": [
+            "moat",
+            "advantage",
+            "scale",
+            "trust",
+            "brand",
+            "data",
+            "supply chain",
+            "efficiency",
+            "cost",
+            "护城河",
+            "优势",
+            "规模",
+            "信任",
+            "品牌",
+            "数据",
+            "供应链",
+            "效率",
+            "成本",
+        ],
+    },
+    {
+        "question_id": "competition_and_anti_moat",
+        "question": "What competitive pressure or anti-moat risk does management acknowledge?",
+        "terms": [
+            "competition",
+            "competitive",
+            "uncertainty",
+            "pressure",
+            "external",
+            "challenge",
+            "industry",
+            "竞争",
+            "对手",
+            "不确定",
+            "压力",
+            "外部",
+            "挑战",
+            "行业",
+        ],
+    },
+    {
+        "question_id": "regulatory_trade_and_platform_risks",
+        "question": "What regulatory, trade, tariff, platform-governance, consumer-protection, quality, or geopolitical risks does management mention or imply?",
+        "terms": [
+            "regulatory",
+            "regulation",
+            "tariff",
+            "trade",
+            "consumer protection",
+            "quality",
+            "geopolitical",
+            "risk",
+            "监管",
+            "法规",
+            "关税",
+            "贸易",
+            "消费者保护",
+            "质量",
+            "地缘",
+            "风险",
+        ],
+    },
+    {
+        "question_id": "capital_allocation",
+        "question": "How does management frame capital allocation, cash use, buybacks, or reinvestment?",
+        "terms": [
+            "capital allocation",
+            "cash",
+            "shareholder",
+            "buyback",
+            "dividend",
+            "reinvest",
+            "balance sheet",
+            "资本配置",
+            "现金",
+            "股东",
+            "回购",
+            "分红",
+            "再投资",
+            "资产负债表",
+        ],
+    },
+    {
+        "question_id": "management_priorities_and_tone",
+        "question": "What does management's tone reveal about priorities: growth versus profitability, short-term margin versus long-term value, caution versus confidence, and operational focus?",
+        "terms": [
+            "long-term",
+            "profitability",
+            "growth",
+            "investment",
+            "confidence",
+            "caution",
+            "operational",
+            "focus",
+            "长期",
+            "利润",
+            "增长",
+            "投入",
+            "信心",
+            "谨慎",
+            "运营",
+            "聚焦",
+            "本分",
+        ],
+    },
+    {
+        "question_id": "open_questions_and_missing_evidence",
+        "question": "What important business-model questions remain unanswered by this video and need follow-up from filings, transcripts, customer evidence, merchant evidence, or competitors?",
+        "terms": [
+            "not disclosed",
+            "unclear",
+            "follow up",
+            "question",
+            "uncertainty",
+            "evidence",
+            "competitors",
+            "未披露",
+            "不清楚",
+            "问题",
+            "不确定",
+            "证据",
+            "对手",
+            "竞争对手",
+        ],
+    },
+]
+
+
+def business_model_question_results_from_segments(
+    *,
+    source: dict[str, Any],
+    segments: list[dict[str, Any]],
+    period: str | None = None,
+    limitation: str | None = None,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for question in BUSINESS_MODEL_VIDEO_QUESTIONS:
+        matches = question_matches(segments, question.get("terms", []), limit=3)
+        results.append(
+            {
+                "source_id": source.get("source_id"),
+                "source_name": source.get("name"),
+                "source_url": source.get("url"),
+                "period": period or source.get("period"),
+                "platform": source.get("platform"),
+                "question_id": question["question_id"],
+                "question": question["question"],
+                "answer_status": "evidence_found" if matches else "not_answered_no_matching_transcript_evidence",
+                "current_read": current_read_for_question(question["question_id"], matches),
+                "matched_terms": sorted({term for match in matches for term in match.get("matched_terms", [])}),
+                "evidence": matches,
+                "limitation": limitation
+                or "V1 retrieves transcript evidence for the question; it does not yet produce an LLM-written answer unless a permitted reasoning adapter is configured.",
+            }
+        )
+    return results
+
+
+def question_results_without_transcript(
+    source: dict[str, Any],
+    *,
+    status: str,
+    limitation: str | None = None,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "source_id": source.get("source_id"),
+            "source_name": source.get("name"),
+            "source_url": source.get("url"),
+            "period": source.get("period"),
+            "platform": source.get("platform"),
+            "question_id": question["question_id"],
+            "question": question["question"],
+            "answer_status": "not_answered_no_transcript",
+            "current_read": f"Question queued, but source status is {status}.",
+            "matched_terms": [],
+            "evidence": [],
+            "limitation": limitation
+            or "Need public captions/subtitles, an official transcript, permitted ASR, a user-provided transcript, or a platform-specific reasoning adapter before answering.",
+        }
+        for question in BUSINESS_MODEL_VIDEO_QUESTIONS
+    ]
+
+
+def business_model_question_pack_summary(source_results: list[dict[str, Any]]) -> dict[str, Any]:
+    all_results = [
+        item
+        for result in source_results
+        for item in result.get("business_model_question_results", [])
+    ]
+    answer_counts = Counter(str(item.get("answer_status") or "unknown") for item in all_results)
+    source_counts = Counter(
+        str(result.get("adapter") or "unknown")
+        for result in source_results
+        if result.get("business_model_question_results")
+    )
+    return {
+        "status": "question_pack_ready",
+        "question_count": len(BUSINESS_MODEL_VIDEO_QUESTIONS),
+        "source_question_set_count": sum(1 for result in source_results if result.get("business_model_question_results")),
+        "total_question_results": len(all_results),
+        "answer_status_counts": dict(sorted(answer_counts.items())),
+        "source_adapter_counts": dict(sorted(source_counts.items())),
+        "questions": BUSINESS_MODEL_VIDEO_QUESTIONS,
+    }
+
+
+def question_matches(
+    segments: list[dict[str, Any]],
+    terms: list[str],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    for segment in segments:
+        text = str(segment.get("text") or "")
+        lowered = text.lower()
+        matched_terms = [term for term in terms if term and term.lower() in lowered]
+        if not matched_terms:
+            continue
+        matches.append(
+            {
+                "start_seconds": segment.get("start_seconds"),
+                "segment_index": segment.get("segment_index", segment.get("index")),
+                "matched_terms": matched_terms[:8],
+                "excerpt": trim_text(text, limit=420),
+            }
+        )
+        if len(matches) >= limit:
+            break
+    return matches
+
+
+def current_read_for_question(question_id: str, matches: list[dict[str, Any]]) -> str:
+    if not matches:
+        return "No direct transcript evidence found for this question in the collected caption/subtitle text."
+    labels = {
+        "customer_value_proposition": "The source contains direct management language about customer value or quality.",
+        "customer_behavior_and_retention": "The source contains direct management language about customer behavior, engagement, repeat use, or changing needs.",
+        "merchant_value_and_roi": "The source contains direct management language about merchants or seller ecosystem support.",
+        "merchant_profitability_and_sustainability": "The source contains language that may bear on merchant profitability, fees, logistics, returns, or price competition.",
+        "revenue_engine": "The source contains direct language about revenue or monetization drivers.",
+        "monetization_take_rate_ads_and_fees": "The source contains direct language about advertising, fees, subsidies, or monetization intensity.",
+        "unit_economics_and_kpis": "The source contains operating KPI or unit-economics proxy language.",
+        "cost_structure_and_margin_drivers": "The source contains direct language about costs, margin drivers, logistics, fulfillment, subsidies, or operating leverage.",
+        "investment_phase_and_costs": "The source contains direct language about investment, costs, margins, or profitability pressure.",
+        "supply_chain_operating_model": "The source contains direct language about supply chain, agriculture, source models, logistics, or industry-chain efficiency.",
+        "fulfillment_quality_trust": "The source contains direct language about quality, fulfillment, logistics, service, or trust.",
+        "pinduoduo_domestic_model": "The source contains direct language about Pinduoduo's domestic China model.",
+        "temu_global_model": "The source contains direct language about Temu, global, cross-border, or overseas expansion.",
+        "pinduoduo_vs_temu_model_comparison": "The source contains matching language that can help compare Pinduoduo and Temu.",
+        "flywheel_and_network_effects": "The source contains language consistent with a flywheel, scale, ecosystem, data, or network-effect hypothesis.",
+        "moat_evidence": "The source contains language that may support a moat hypothesis.",
+        "competition_and_anti_moat": "The source contains direct language about competition, pressure, challenges, or industry uncertainty.",
+        "regulatory_trade_and_platform_risks": "The source contains direct language about regulation, trade, quality, consumer-protection, geopolitical, or platform-governance risks.",
+        "capital_allocation": "The source contains direct language about cash, shareholder returns, reinvestment, or balance-sheet priorities.",
+        "management_priorities_and_tone": "The source contains direct language about management priorities, long-term value, growth, profitability, or operating focus.",
+        "open_questions_and_missing_evidence": "The source itself raises or mentions uncertainty, unanswered questions, or evidence gaps.",
+    }
+    return labels.get(question_id, "The source contains matching transcript evidence for this question.")
+
+
+def trim_text(text: str, *, limit: int) -> str:
+    clean = " ".join(str(text).replace("\xa0", " ").split())
+    if len(clean) <= limit:
+        return clean
+    return clean[: limit - 3].rstrip() + "..."

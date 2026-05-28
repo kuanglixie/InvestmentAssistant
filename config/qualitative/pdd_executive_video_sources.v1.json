@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "company_id": "pdd",
+  "status": "executive_video_transcripts_v1",
+  "scope": "Curated executive video/interview transcript sources for PDD/Pinduoduo/Temu leadership and business-model evidence.",
+  "default_rate_limit_seconds": 1.5,
+  "default_max_evidence_items": 12,
+  "audit_policy": {
+    "source_tier": "2-4_by_provenance",
+    "evidence_role": "management_context_or_claim_only",
+    "important_claim_rule": "Important business-model or leadership claims from videos/interviews require cross-checking against filings, financial outcomes, customer evidence, and merchant evidence.",
+    "financial_number_rule": "Do not use video/interview transcripts for official financial numbers.",
+    "failure_rule": "If captions/subtitles are unavailable or blocked, record the failed/partial collection state and do not synthesize a transcript.",
+    "business_model_question_rule": "Run the shared business-model question pack only over collected subtitles/transcripts, permitted ASR output, user-provided transcripts, or a clearly labeled platform analysis adapter."
+  },
+  "sources": [
+    {
+      "source_id": "bilibili_people_daily_colin_huang_interview",
+      "name": "人民网专访拼多多创始人黄峥",
+      "adapter": "bilibili_subtitle_api",
+      "platform": "bilibili",
+      "status": "collectable_when_network_available",
+      "source_quality_tier": 3,
+      "language": "Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "url": "https://www.bilibili.com/video/BV1jF41127tX/",
+      "bvid": "BV1jF41127tX",
+      "preferred_languages": [
+        "zh",
+        "zh-CN",
+        "ai-zh"
+      ],
+      "executive_names": [
+        "黄峥",
+        "Colin Huang"
+      ],
+      "max_evidence_items": 10,
+      "notes": [
+        "Public Bilibili video target discovered during PDD executive-material source search.",
+        "Treat as lower-tier executive/context evidence until original source provenance and transcript quality are reviewed."
+      ]
+    },
+    {
+      "source_id": "manual_bilibili_transcript_export_intake",
+      "name": "Manual Bilibili transcript export intake",
+      "adapter": "manual_transcript_file",
+      "platform": "bilibili",
+      "status": "planned_pending_transcript_file",
+      "source_quality_tier": 4,
+      "language": "Chinese_or_English",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "url": "",
+      "manual_transcript_source": "Bilibili subtitle export, BibiGPT export, or permitted ASR transcript",
+      "local_transcript_path": "",
+      "max_segments": 500,
+      "notes": [
+        "Use this when a Bilibili video has no exposed subtitle track but the user provides a transcript export or permitted ASR output.",
+        "The agent will not fetch or synthesize video content from this row unless local_transcript_path points to a real transcript file."
+      ]
+    },
+    {
+      "source_id": "people_daily_huanqiu_colin_huang_social_commerce_interview",
+      "name": "人民网 / 环球网：黄峥谈社交电商与拼多多模式",
+      "adapter": "web_reader_interview_page",
+      "platform": "web_interview_transcript",
+      "status": "collectable_when_network_available",
+      "source_quality_tier": 3,
+      "language": "Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "url": "https://m.huanqiu.com/article/9CaKrnK3Cri",
+      "related_video_url": "https://www.bilibili.com/video/BV1jF41127tX/",
+      "direct_html_fallback": true,
+      "executive_names": [
+        "黄峥",
+        "Colin Huang"
+      ],
+      "max_evidence_items": 10,
+      "max_segments": 140,
+      "notes": [
+        "Public People/Huanqiu text page for Huang Zheng's People interview context; use as controlled fallback when the related Bilibili page exposes no subtitle track.",
+        "Do not label this as a Bilibili transcript. It is web interview text linked to the same executive-material research target."
+      ]
+    },
+    {
+      "source_id": "sina_china_entrepreneur_colin_huang_2018_interview",
+      "name": "中国企业家 / 新浪财经：黄峥上市前访谈",
+      "adapter": "web_reader_interview_page",
+      "platform": "web_interview_transcript",
+      "status": "collectable_when_network_available",
+      "source_quality_tier": 3,
+      "language": "Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "url": "https://finance.sina.com.cn/chanjing/gsnews/2018-07-26/doc-ihfvkitx2448634.shtml",
+      "executive_names": [
+        "黄峥",
+        "Colin Huang"
+      ],
+      "max_evidence_items": 10,
+      "max_segments": 180,
+      "notes": [
+        "Public media interview page; use for executive framing, not official financial numbers.",
+        "Source provenance should be reviewed before upgrading confidence."
+      ]
+    },
+    {
+      "source_id": "sina_cctv_colin_huang_brand_quality_2018_interview",
+      "name": "央视财经 / 新浪科技：黄峥谈平台治理和品质升级",
+      "adapter": "web_reader_interview_page",
+      "platform": "web_interview_transcript",
+      "status": "collectable_when_network_available",
+      "source_quality_tier": 3,
+      "language": "Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "customer_trust"
+      ],
+      "url": "https://tech.sina.com.cn/i/2018-11-11/doc-ihnstwwq6830955.shtml",
+      "executive_names": [
+        "黄峥",
+        "Colin Huang"
+      ],
+      "max_evidence_items": 10,
+      "max_segments": 160,
+      "notes": [
+        "Public media interview page focused on consumer orientation, counterfeit/brand issues, and supply-chain quality.",
+        "Treat as management-context evidence and cross-check against risk factors and customer evidence."
+      ]
+    },
+    {
+      "source_id": "podwise_colin_huang_future_of_pinduoduo_2019_summary",
+      "name": "Podwise：财约你专访黄峥《拼多多的未来》摘要页",
+      "adapter": "web_reader_interview_page",
+      "platform": "youtube_transcript_summary_page",
+      "status": "collectable_when_network_available",
+      "source_quality_tier": 4,
+      "language": "Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "url": "https://podwise.ai/dashboard/episodes/2327366",
+      "executive_names": [
+        "黄峥",
+        "Colin Huang"
+      ],
+      "max_evidence_items": 8,
+      "max_segments": 80,
+      "notes": [
+        "This page references a YouTube episode and exposes a public summary/outline, but full transcript access may require sign-in.",
+        "Use only as a lead to locate the underlying video/transcript, not as strong evidence."
+      ]
+    },
+    {
+      "source_id": "manual_youtube_executive_interview_intake",
+      "name": "Manual YouTube executive interview URL intake",
+      "adapter": "manual_url_intake",
+      "platform": "youtube",
+      "status": "planned_pending_curated_video_urls",
+      "source_quality_tier": 4,
+      "language": "English_or_Chinese",
+      "use_case_tags": [
+        "business_model",
+        "leadership",
+        "right_people"
+      ],
+      "search_locator": "YouTube PDD Pinduoduo Colin Huang Chen Lei interview business model",
+      "executive_names": [
+        "Colin Huang",
+        "Chen Lei",
+        "Jiazhen Zhao"
+      ],
+      "notes": [
+        "The code supports YouTube caption tracks once a real URL is added to this registry.",
+        "Do not add guessed video URLs; use only verified target pages."
+      ]
+    }
+  ]
+}

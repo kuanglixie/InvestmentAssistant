@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "companies": {
+    "pdd": {
+      "company": "PDD",
+      "brands": ["Temu"],
+      "competitors": ["Amazon", "Shein", "AliExpress", "TikTok Shop"],
+      "region": "US",
+      "time_window": "weekly",
+      "lookback_weeks": 52,
+      "keywords": ["Temu", "Temu haul", "Temu review", "Temu refund", "Temu scam", "Temu coupon"]
+    },
+    "tencent": {
+      "company": "Tencent",
+      "brands": ["WeChat", "Weixin", "Tencent Games"],
+      "competitors": ["ByteDance", "NetEase", "Alibaba"],
+      "region": "CN",
+      "time_window": "weekly",
+      "lookback_weeks": 52,
+      "keywords": ["WeChat", "Weixin", "Tencent Games"]
+    },
+    "google": {
+      "company": "Google",
+      "brands": ["Google Search", "YouTube", "Android", "Google Cloud"],
+      "competitors": ["Microsoft", "Meta", "Amazon", "Apple"],
+      "region": "US",
+      "time_window": "weekly",
+      "lookback_weeks": 52,
+      "keywords": ["Google Search", "YouTube", "Android", "Google Cloud"]
+    }
+  }
+}
