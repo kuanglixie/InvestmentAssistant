@@ -5,6 +5,7 @@ from typing import Any
 
 from stock_research.alternative_data import collect_alternative_data_signals
 from stock_research.companies import resolve_company_from_registry
+from stock_research.diagnostics import run_v1_financial_diagnostics
 from stock_research.extraction.ir_pdf import cross_validate_and_fill_from_ir_reports
 from stock_research.extraction.xbrl import extract_financial_facts_from_documents, verify_financial_facts
 from stock_research.learning.lessons import (
@@ -13,7 +14,13 @@ from stock_research.learning.lessons import (
     lesson_status_counts,
     load_lesson_registry,
 )
-from stock_research.metrics.v1 import calculate_v1_metrics
+from stock_research.material_events import scan_material_events
+from stock_research.management_communication import build_management_communication_pack
+from stock_research.metrics.v1 import calculate_v1_financial_metrics, calculate_v1_valuation_metrics
+from stock_research.official_evidence import (
+    build_official_report_evidence_pack,
+    build_official_report_evidence_report,
+)
 from stock_research.qualitative.annual_report import (
     BUSINESS_MODEL_TOPICS,
     LEADERSHIP_TOPICS,
@@ -26,12 +33,17 @@ from stock_research.qualitative.executive_transcripts import collect_executive_v
 from stock_research.qualitative.official_events import collect_official_event_transcripts
 from stock_research.qualitative.video_manifest import merge_video_manifests
 from stock_research.qualitative.public_voice import collect_public_voice_evidence, synthesize_customer_happiness
+from stock_research.qualitative.right_people import build_right_people_analysis
+from stock_research.report_pack import build_financial_report_pack
 from stock_research.reports.markdown import (
     build_business_model_report,
     build_data_linkage_report,
     build_final_report,
     build_financial_results_report,
+    build_right_people_chinese_report,
+    build_right_people_report,
 )
+from stock_research.reports.financial_interpretation import build_financial_easy_reading_report
 from stock_research.sources.discovery import discover_pdd_sources, discover_tencent_sources
 from stock_research.sources.document_policy import classify_sec_document_record
 from stock_research.state import ResearchState
@@ -41,7 +53,14 @@ from stock_research.storage import (
     write_business_model_report,
     write_data_linkage_report,
     write_final_report,
+    write_financial_easy_reading_report,
+    write_financial_report_pack,
     write_financial_results_report,
+    write_official_report_evidence_pack,
+    write_official_report_evidence_report,
+    write_management_communication_pack,
+    write_right_people_chinese_report,
+    write_right_people_report,
     write_video_manifest,
 )
 from stock_research.valuation.market_data import collect_market_inputs
@@ -101,6 +120,10 @@ def source_discovery(state: ResearchState) -> ResearchState:
                 _document_record_from_download(document)
                 for document in discovery.get("downloaded_documents", [])
             ]
+            category_counts = discovery.get("downloaded_document_category_counts") or {}
+            category_summary = ", ".join(
+                f"{category}: {count}" for category, count in sorted(category_counts.items())
+            )
             body = "\n".join(
                 [
                     "Discovered official PDD sources using live SEC/PDD IR fetches.",
@@ -108,10 +131,14 @@ def source_discovery(state: ResearchState) -> ResearchState:
                     f"- SEC CIK: {sec_identity.get('cik_padded')}",
                     f"- Total SEC filings indexed: {len(discovery.get('sec_filings', []))}",
                     f"- Financial-report filings identified: {len(discovery.get('financial_filings', []))}",
+                    f"- Deep filing-stack filings identified: {len(discovery.get('deep_research_filings', []))}",
                     f"- Reports downloaded: {len(discovery.get('downloaded_documents', []))}",
+                    f"- Downloaded document categories: {category_summary or 'none'}",
                     f"- Download errors: {len(discovery.get('download_errors', []))}",
                     f"- PDD IR home fetched: {'yes' if discovery.get('pdd_ir') else 'no'}",
                     f"- PDD IR fetch error: {discovery.get('pdd_ir_error') or 'none'}",
+                    f"- Latest PDD IR financial release fetched: {'yes' if discovery.get('pdd_ir_latest_financial_release') else 'no'}",
+                    f"- Latest PDD IR financial release error: {discovery.get('pdd_ir_latest_financial_release_error') or 'none'}",
                     "",
                     "Official filings and company IR remain the source of record.",
                 ]
@@ -369,10 +396,14 @@ def _source_candidates_from_tencent_discovery(discovery: dict) -> list[dict]:
 def _document_record_from_download(document: dict) -> dict:
     downloaded_file = document.get("downloaded_file") or document.get("primary_document")
     role = document.get("document_role", "primary")
+    source_id = document.get("source_id") or "sec_edgar_pdd"
+    document_id = document.get("document_id") or f"{document.get('accession_number')}:{downloaded_file}"
+    form = document.get("form")
+    document_type = document.get("document_type") or f"{form}:{role}"
     record = {
-        "document_id": f"{document.get('accession_number')}:{downloaded_file}",
-        "source_id": "sec_edgar_pdd",
-        "document_type": f"{document.get('form')}:{role}",
+        "document_id": document_id,
+        "source_id": source_id,
+        "document_type": document_type,
         "filing_date": document.get("filing_date"),
         "report_date": document.get("report_date"),
         "primary_document": document.get("primary_document"),
@@ -419,6 +450,16 @@ def financial_extraction(state: ResearchState) -> ResearchState:
     top_counts = ", ".join(
         f"{metric}: {count}" for metric, count in sorted(counts_by_metric.items())[:12]
     )
+    coverage = extraction["summary"].get("coverage", {})
+    priority_a_missing = coverage.get("priority_a", {}).get("missing", [])
+    question_coverage = coverage.get("question_coverage", [])
+    question_status = ", ".join(
+        f"{item.get('question_id')}: {item.get('status')}" for item in question_coverage[:5]
+    )
+    review_flags = extraction["summary"].get("review_flags", [])
+    flag_summary = ", ".join(
+        str(flag.get("flag_id")) for flag in review_flags[:5] if flag.get("flag_id")
+    )
     body = "\n".join(
         [
             "Extracted mapped financial facts from locally cached official financial documents.",
@@ -427,6 +468,9 @@ def financial_extraction(state: ResearchState) -> ResearchState:
             f"- Selected/deduplicated facts: {len(state['extracted_facts'])}",
             f"- Extraction errors: {len(extraction['summary'].get('extraction_errors', []))}",
             f"- Metric coverage: {top_counts or 'none'}",
+            f"- Priority-A gaps: {', '.join(priority_a_missing) if priority_a_missing else 'none'}",
+            f"- Question coverage: {question_status or 'none'}",
+            f"- Review flags: {flag_summary or 'none'}",
             "",
             "The extractor uses mapped official-source tags or table labels only. Missing values stay missing; no financial number is invented.",
         ]
@@ -627,15 +671,7 @@ def market_data_agent(state: ResearchState) -> ResearchState:
 
 
 def metrics_agent(state: ResearchState) -> ResearchState:
-    company_id = (state.get("canonical_company") or {}).get("company_id")
-    if not state.get("market_inputs"):
-        state["market_inputs"] = load_manual_market_inputs(company_id)
-    state["metrics"] = calculate_v1_metrics(
-        state.get("extracted_facts", []),
-        market_inputs=state["market_inputs"],
-    )
-    if state["market_inputs"].get("review_required") and not state["market_inputs"].get("missing"):
-        state["human_review_required"] = True
+    state["metrics"] = calculate_v1_financial_metrics(state.get("extracted_facts", []))
     calculated = [
         metric for metric in state["metrics"] if metric.get("status") == "calculated"
     ]
@@ -644,18 +680,125 @@ def metrics_agent(state: ResearchState) -> ResearchState:
     ]
     body = "\n".join(
         [
-            "Calculated V1 metrics where the verified fact set was sufficient.",
+            "Calculated V1 financial-quality metrics where the verified fact set was sufficient.",
             "",
             f"- Metric families calculated: {len(calculated)}",
             f"- Metric families pending: {len(pending)}",
-            "- Owner Earnings V1 uses D&A as the maintenance CapEx approximation.",
-            f"- Market input status: {state['market_inputs'].get('status')}.",
-            "- Enterprise value and yield metrics calculate when market cap, FX, and financial-statement inputs are available.",
-            "- ROIC is calculated without applying a threshold.",
+            "- Owner earnings is labelled as a proxy; V1 uses D&A as the maintenance CapEx approximation.",
+            "- Enterprise value, yield, and estimated-return style metrics now belong to the Valuation Agent.",
+            "- ROIC is calculated as a financing-side invested-capital proxy without applying a threshold.",
             "- Formula changes still require human approval.",
         ]
     )
     return complete_node(state, agent_id="metrics", title="Metrics Agent", report_body=body)
+
+
+def diagnostic_rules_agent(state: ResearchState) -> ResearchState:
+    findings = run_v1_financial_diagnostics(
+        extracted_facts=state.get("extracted_facts", []),
+        metrics=state.get("metrics", []),
+    )
+    state["diagnostic_findings"] = findings
+    summary = findings.get("summary", {})
+    body = "\n".join(
+        [
+            "Applied deterministic financial diagnostic rules to the calculated metric families.",
+            "",
+            f"- Status: {findings.get('status')}",
+            f"- Questions answered: {summary.get('answered', 0)}",
+            f"- Questions partial: {summary.get('partial', 0)}",
+            f"- Questions missing: {summary.get('missing', 0)}",
+            f"- Warning flags: {summary.get('warning_flags', 0)}",
+            "- Diagnostics ask what to verify; Metrics calculate the underlying numbers.",
+        ]
+    )
+    return complete_node(state, agent_id="diagnostic_rules", title="Diagnostic Rules Agent", report_body=body)
+
+
+def material_event_scan_agent(state: ResearchState) -> ResearchState:
+    scan = scan_material_events(state.get("documents", []))
+    state["material_event_scan"] = scan
+    if scan.get("high_priority_event_count", 0):
+        state["human_review_required"] = True
+    sample_lines = [
+        f"- {event.get('filing_date') or 'no date'} | {event.get('event_type')} | {event.get('severity')} | {event.get('document_id')}"
+        for event in scan.get("events", [])[:6]
+    ]
+    body = "\n".join(
+        [
+            "Scanned official non-core filings for material events without turning every filing into a research section.",
+            "",
+            f"- Status: {scan.get('status')}",
+            f"- Documents scanned: {scan.get('scanned_document_count', 0)}",
+            f"- Material events found: {scan.get('material_event_count', 0)}",
+            f"- High-priority events: {scan.get('high_priority_event_count', 0)}",
+            "- Event samples:",
+            *(sample_lines or ["- none"]),
+            "",
+            "Only accounting reliability, auditor, financing, governance/control, management, dilution, capital allocation, legal/regulatory, acquisition, impairment, and restructuring signals are promoted.",
+        ]
+    )
+    return complete_node(
+        state,
+        agent_id="material_event_scan",
+        title="Material Event Scanner",
+        report_body=body,
+    )
+
+
+def financial_report_pack_agent(state: ResearchState) -> ResearchState:
+    state["financial_report_pack"] = build_financial_report_pack(state)
+    write_financial_report_pack(state)
+    pack = state["financial_report_pack"]
+    review_flags = pack.get("human_review_flags", [])
+    body = "\n".join(
+        [
+            "Built the structured FinancialReportPack for source-constrained report writing.",
+            "",
+            f"- Schema version: {pack.get('schema_version')}",
+            f"- Annual fact rows: {len(pack.get('annual_facts', []))}",
+            f"- Quarterly fact rows: {len(pack.get('quarterly_facts', []))}",
+            f"- Financial metric families: {len(pack.get('financial_metrics', []))}",
+            f"- Material events: {(pack.get('material_event_scan') or {}).get('material_event_count', 0)}",
+            f"- Human review flags: {len(review_flags)}",
+            f"- Pack path: `{state.get('financial_report_pack_path')}`",
+            "",
+            "The interpretation layer may summarize this pack but must not recalculate numbers or add facts outside the pack.",
+        ]
+    )
+    return complete_node(
+        state,
+        agent_id="financial_report_pack",
+        title="Financial Report Pack Builder",
+        report_body=body,
+    )
+
+
+def official_report_evidence_agent(state: ResearchState) -> ResearchState:
+    pack = build_official_report_evidence_pack(state)
+    state["official_report_evidence_pack"] = pack
+    write_official_report_evidence_pack(state)
+    report = build_official_report_evidence_report(pack)
+    write_official_report_evidence_report(state, report)
+    body = "\n".join(
+        [
+            "Built the filings-only Official Report Evidence package.",
+            "",
+            f"- Schema version: {pack.get('schema_version')}",
+            f"- Question answers: {len(pack.get('question_answers', []))}",
+            f"- Decision-relevant narratives: {len(pack.get('decision_relevant_narratives', []))}",
+            f"- Pack path: `{state.get('official_report_evidence_pack_path')}`",
+            f"- Report path: `{state.get('official_report_evidence_report_path')}`",
+            "",
+            "This layer separates filing facts, management explanations, our inference, and unknowns. It does not use earnings-call transcripts or third-party data.",
+        ]
+    )
+    return complete_node(
+        state,
+        agent_id="official_report_evidence",
+        title="Official Report Evidence Agent",
+        report_body=body,
+    )
 
 
 def alternative_data_agent(state: ResearchState) -> ResearchState:
@@ -911,45 +1054,38 @@ def _public_voice_collection_breadth(stats: dict[str, Any]) -> str:
 
 
 def leadership_people_agent(state: ResearchState) -> ResearchState:
-    learning = lesson_context_for_agent("leadership_people")
-    annual_report_evidence = annual_report_topic_evidence(
-        state.get("documents", []),
-        topic_terms=LEADERSHIP_TOPICS,
-    )
-    state["leadership_findings"] = {
-        "status": "annual_report_evidence_collected"
-        if annual_report_evidence.get("status") == "evidence_collected"
-        else "scaffolded_pending_source_research",
-        "principle": "right people",
-        "learning_context": learning,
-        "annual_report_evidence": annual_report_evidence,
-        "allowed_sources": [
-            "annual reports",
-            "shareholder letters",
-            "earnings calls",
-            "interviews",
-            "YouTube",
-            "Bilibili",
-            "podcasts",
-            "media reports",
-        ],
-        "evidence_needed": [
-            "capital allocation track record",
-            "incentives and insider ownership",
-            "founder/operator involvement",
-            "integrity and communication quality",
-            "organization durability",
-        ],
-    }
+    findings = build_right_people_analysis(state)
+    findings["learning_context"] = lesson_context_for_agent("leadership_people")
+    state["leadership_findings"] = findings
+    subagent_lines = [
+        "- {name}: {status} | {records} evidence records".format(
+            name=report.get("name") or report.get("agent_id"),
+            status=report.get("status"),
+            records=report.get("evidence_records", 0),
+        )
+        for report in findings.get("subagent_reports", [])
+    ]
+    checklist_lines = [
+        f"- {item.get('item')}: {item.get('status')}"
+        for item in findings.get("right_people_checklist", [])
+    ]
+    coverage = findings.get("source_coverage") or {}
     body = "\n".join(
         [
-            "Scaffolded the Leadership / People Agent.",
+            "Ran the Right People / Management Quality Agent.",
             "",
-            f"- Status: {state['leadership_findings']['status']}.",
-            f"- Annual-report evidence: {_topic_hit_summary(annual_report_evidence)}",
-            "- Allowed source types are recorded with future source-quality labels.",
-            f"- Candidate lessons available: {len(learning['candidate_lessons'])}; approved lessons active: {len(learning['approved_lessons'])}.",
-            "- No people conclusion is produced yet.",
+            f"- Status: {findings.get('status')}.",
+            f"- Current read: {findings.get('overall_read')}",
+            f"- Official filing cards: {coverage.get('official_filing_evidence_cards', 0)}",
+            f"- Financial signals: {coverage.get('financial_signal_count', 0)}",
+            f"- Management transcript signals: {coverage.get('management_transcript_signal_count', 0)}",
+            f"- Red flags: {coverage.get('red_flag_count', 0)}",
+            "- Subagents:",
+            *(subagent_lines or ["- none"]),
+            "- Right people checklist:",
+            *(checklist_lines or ["- not available"]),
+            f"- Candidate lessons available: {len(findings['learning_context']['candidate_lessons'])}; approved lessons active: {len(findings['learning_context']['approved_lessons'])}.",
+            "- V1 is evidence-mapping and review-oriented; it does not infer personal integrity beyond source-backed signals.",
         ]
     )
     return complete_node(
@@ -1056,19 +1192,37 @@ def official_event_transcript_agent(state: ResearchState) -> ResearchState:
 
 def valuation_agent(state: ResearchState) -> ResearchState:
     learning = lesson_context_for_agent("valuation")
+    company_id = (state.get("canonical_company") or {}).get("company_id")
+    if not state.get("market_inputs"):
+        state["market_inputs"] = load_manual_market_inputs(company_id)
     market_inputs = state.get("market_inputs", {})
-    metric_statuses = {
+    state["valuation_metrics"] = calculate_v1_valuation_metrics(
+        state.get("extracted_facts", []),
+        market_inputs=market_inputs,
+        financial_metrics=state.get("metrics", []),
+    )
+    if market_inputs.get("review_required") and not market_inputs.get("missing"):
+        state["human_review_required"] = True
+    financial_metric_statuses = {
         metric.get("formula_id"): metric.get("status")
         for metric in state.get("metrics", [])
     }
+    valuation_metric_statuses = {
+        metric.get("formula_id"): metric.get("status")
+        for metric in state.get("valuation_metrics", [])
+    }
+    has_calculated_valuation_metric = any(
+        metric.get("status") == "calculated" for metric in state.get("valuation_metrics", [])
+    )
     state["valuation_findings"] = {
-        "status": "market_inputs_loaded"
-        if market_inputs.get("status") in {"input_available", "review_required"}
-        else "scaffolded_pending_market_data_and_assumptions",
+        "status": "valuation_metrics_calculated"
+        if has_calculated_valuation_metric
+        else "pending_market_data_or_financial_inputs",
         "principle": "right price",
         "learning_context": learning,
         "market_inputs": market_inputs,
-        "metric_statuses": metric_statuses,
+        "financial_metric_statuses": financial_metric_statuses,
+        "valuation_metric_statuses": valuation_metric_statuses,
         "prepared_inputs": [
             "owner earnings",
             "cash conversion",
@@ -1085,12 +1239,14 @@ def valuation_agent(state: ResearchState) -> ResearchState:
     }
     body = "\n".join(
         [
-            "Scaffolded the Valuation Agent.",
+            "Ran the Valuation Agent.",
             "",
             f"- Status: {state['valuation_findings']['status']}.",
             f"- Market input status: {market_inputs.get('status', 'not loaded')}.",
-            f"- Enterprise value status: {metric_statuses.get('enterprise_value_v1', 'not run')}.",
-            "- Prepared inputs include owner earnings, cash/debt, and ROIC.",
+            f"- Enterprise value status: {valuation_metric_statuses.get('enterprise_value_v1', 'not run')}.",
+            f"- Owner earnings yield status: {valuation_metric_statuses.get('true_yield_v1', 'not run')}.",
+            f"- FCF yield status: {valuation_metric_statuses.get('free_cash_flow_yield_v1', 'not run')}.",
+            "- Prepared financial inputs include owner earnings, cash/debt, cash conversion, and ROIC.",
             f"- Candidate lessons available: {len(learning['candidate_lessons'])}; approved lessons active: {len(learning['approved_lessons'])}.",
             "- No intrinsic value estimate is produced yet.",
         ]
@@ -1227,13 +1383,23 @@ def competitor_comparison_agent(state: ResearchState) -> ResearchState:
 
 
 def financial_results_report_agent(state: ResearchState) -> ResearchState:
+    state["management_communication_pack"] = build_management_communication_pack(state)
+    write_management_communication_pack(state)
     report = build_financial_results_report(state, audit_status="Draft pending audit review")
     write_financial_results_report(state, report)
+    easy_report = build_financial_easy_reading_report(
+        state.get("financial_report_pack", {}),
+        audit_status="Draft pending audit review",
+        official_evidence_pack=state.get("official_report_evidence_pack", {}),
+        management_communication_pack=state.get("management_communication_pack", {}),
+    )
+    write_financial_easy_reading_report(state, easy_report)
     body = "\n".join(
         [
             "Built the dedicated Financial Results Report draft.",
             "",
             f"- Financial results report path: {state['financial_results_report_path']}",
+            f"- Easy-reading financial report path: {state['financial_easy_reading_report_path']}",
             "- Scope: official financial statements, operating KPIs, calculated metrics, market/yield inputs, verification, and cross-validation.",
             "- Detailed fact IDs and formulas remain in the data-linkage report.",
         ]
@@ -1266,6 +1432,29 @@ def business_model_report_agent(state: ResearchState) -> ResearchState:
     )
 
 
+def right_people_report_agent(state: ResearchState) -> ResearchState:
+    report = build_right_people_report(state, audit_status="Draft pending audit review")
+    chinese_report = build_right_people_chinese_report(state, audit_status="Draft pending audit review")
+    write_right_people_report(state, report)
+    write_right_people_chinese_report(state, chinese_report)
+    body = "\n".join(
+        [
+            "Built the dedicated Right People / Management Quality Report draft.",
+            "",
+            f"- Right people report path: {state['right_people_report_path']}",
+            f"- Chinese right people report path: {state['right_people_chinese_report_path']}",
+            "- Scope: governance/control, incentives, capital allocation, communication quality, execution record, and red flags.",
+            "- Detailed evidence linkage remains in the data-linkage report.",
+        ]
+    )
+    return complete_node(
+        state,
+        agent_id="right_people_report",
+        title="Right People Report Agent",
+        report_body=body,
+    )
+
+
 def report_builder(state: ResearchState) -> ResearchState:
     report = build_final_report(state, audit_status="Draft pending audit review")
     linkage_report = build_data_linkage_report(state, audit_status="Draft pending audit review")
@@ -1277,9 +1466,12 @@ def report_builder(state: ResearchState) -> ResearchState:
             "",
             f"- Report path: {state['final_report_path']}",
             f"- Financial results report path: {state.get('financial_results_report_path')}",
+            f"- Financial easy-reading report path: {state.get('financial_easy_reading_report_path')}",
             f"- Business model report path: {state.get('business_model_report_path')}",
+            f"- Right people report path: {state.get('right_people_report_path')}",
+            f"- Chinese right people report path: {state.get('right_people_chinese_report_path')}",
             f"- Data linkage path: {state['data_linkage_report_path']}",
-            "- The main report is the cross-section readout; the specialized reports split financial results and business-model analysis.",
+            "- The main report is the cross-section readout; the specialized reports split financial results, business-model analysis, and management-quality analysis.",
             "- The linkage report contains source and audit trails.",
         ]
     )
@@ -1326,10 +1518,14 @@ def audit_review(state: ResearchState) -> ResearchState:
     state = complete_node(state, agent_id="audit_review", title="Audit Review Agent", report_body=body)
     financial_report = build_financial_results_report(state, audit_status=audit_status)
     business_model_report = build_business_model_report(state, audit_status=audit_status)
+    right_people_report = build_right_people_report(state, audit_status=audit_status)
+    right_people_chinese_report = build_right_people_chinese_report(state, audit_status=audit_status)
     report = build_final_report(state, audit_status=audit_status)
     linkage_report = build_data_linkage_report(state, audit_status=audit_status)
     write_financial_results_report(state, financial_report)
     write_business_model_report(state, business_model_report)
+    write_right_people_report(state, right_people_report)
+    write_right_people_chinese_report(state, right_people_chinese_report)
     write_final_report(state, report)
     write_data_linkage_report(state, linkage_report)
     save_state(state)

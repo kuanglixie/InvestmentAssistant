@@ -9,14 +9,23 @@ from pathlib import Path
 from stock_research.cli import run_research, write_lesson_report
 from stock_research.alternative_data.agent import collect_alternative_data_signals_for_request
 from stock_research.companies import resolve_company_from_registry
+from stock_research.diagnostics import run_v1_financial_diagnostics
 from stock_research.extraction.xbrl import extract_financial_facts_from_documents, verify_financial_facts
 from stock_research.extraction.tencent_reports import (
     extract_tencent_annual_report_text_facts,
     extract_tencent_interim_report_text_facts,
 )
 from stock_research.env import load_dotenv
-from stock_research.metrics.v1 import calculate_v1_metrics, quarterly_fact_rows
+from stock_research.material_events import scan_material_events
+from stock_research.metrics.v1 import (
+    calculate_v1_financial_metrics,
+    calculate_v1_metrics,
+    calculate_v1_valuation_metrics,
+    quarterly_fact_rows,
+)
 from stock_research.monitoring.watchlist import run_watchlist_monitor
+from stock_research.report_pack import build_financial_report_pack
+from stock_research.reports.financial_interpretation import build_financial_easy_reading_report
 from stock_research.qualitative.annual_report import official_report_business_model_analysis
 from stock_research.qualitative.external_moat import build_external_moat_validation_plan
 from stock_research.qualitative.executive_transcripts import (
@@ -29,11 +38,18 @@ from stock_research.qualitative.business_model_video_questions import (
 )
 from stock_research.qualitative.official_events import collect_official_event_transcripts
 from stock_research.qualitative.public_voice import collect_public_voice_evidence
+from stock_research.qualitative.right_people import build_right_people_analysis
 from stock_research.qualitative.video_manifest import (
     build_video_uid,
     canonicalize_url,
     youtube_video_id,
 )
+from stock_research.sources.document_policy import (
+    classify_sec_document_text,
+    is_deep_research_document,
+    is_financial_extraction_document,
+)
+from stock_research.sources.sec import SecClient
 from stock_research.valuation.market_data import (
     parse_google_pdd_quote_text,
     parse_google_hkd_cny_text,
@@ -65,7 +81,13 @@ class ScaffoldRunTest(unittest.TestCase):
             self.assertTrue((run_dir / "audit_log.jsonl").exists())
             self.assertTrue((run_dir / "final_report.md").exists())
             self.assertTrue((run_dir / "financial_results_report.md").exists())
+            self.assertTrue((run_dir / "financial_easy_reading_report.md").exists())
+            self.assertTrue((run_dir / "financial_report_pack.json").exists())
+            self.assertTrue((run_dir / "official_report_evidence_pack.json").exists())
+            self.assertTrue((run_dir / "official_report_evidence_report.md").exists())
             self.assertTrue((run_dir / "business_model_report.md").exists())
+            self.assertTrue((run_dir / "right_people_report.md").exists())
+            self.assertTrue((run_dir / "right_people_report.zh.md").exists())
             self.assertTrue((run_dir / "data_linkage.md").exists())
             self.assertTrue((run_dir / "video_manifest.json").exists())
             self.assertTrue((run_dir / "agent_reports" / "company_resolver.md").exists())
@@ -74,13 +96,36 @@ class ScaffoldRunTest(unittest.TestCase):
             state = json.loads((run_dir / "state.json").read_text(encoding="utf-8"))
             self.assertEqual(state["canonical_company"]["legal_name"], "PDD Holdings Inc.")
             self.assertEqual(state["market"], "us-adr")
-            self.assertEqual(len(state["agent_reports"]), 24)
+            self.assertEqual(len(state["agent_reports"]), 29)
             self.assertEqual(state["financial_results_report_path"], str(run_dir / "financial_results_report.md"))
+            self.assertEqual(
+                state["financial_easy_reading_report_path"],
+                str(run_dir / "financial_easy_reading_report.md"),
+            )
+            self.assertEqual(state["financial_report_pack_path"], str(run_dir / "financial_report_pack.json"))
+            self.assertEqual(
+                state["official_report_evidence_pack_path"],
+                str(run_dir / "official_report_evidence_pack.json"),
+            )
+            self.assertEqual(
+                state["official_report_evidence_report_path"],
+                str(run_dir / "official_report_evidence_report.md"),
+            )
             self.assertEqual(state["business_model_report_path"], str(run_dir / "business_model_report.md"))
+            self.assertEqual(state["right_people_report_path"], str(run_dir / "right_people_report.md"))
+            self.assertEqual(
+                state["right_people_chinese_report_path"],
+                str(run_dir / "right_people_report.zh.md"),
+            )
             self.assertEqual(state["data_linkage_report_path"], str(run_dir / "data_linkage.md"))
             self.assertEqual(state["video_manifest_path"], str(run_dir / "video_manifest.json"))
             self.assertIn("video_manifest", state)
             self.assertIn("alternative_data_findings", state)
+            self.assertIn("valuation_metrics", state)
+            self.assertIn("diagnostic_findings", state)
+            self.assertIn("material_event_scan", state)
+            self.assertIn("financial_report_pack", state)
+            self.assertIn("official_report_evidence_pack", state)
             self.assertGreaterEqual(state["video_manifest"]["record_count"], 5)
             self.assertIn(state["graph_backend"], {"langgraph", "local_sequential_fallback"})
             self.assertIn("learning_context", state)
@@ -89,6 +134,7 @@ class ScaffoldRunTest(unittest.TestCase):
             self.assertIn("public_voice_findings", state)
             self.assertIn("executive_transcript_findings", state)
             self.assertIn("official_event_transcript_findings", state)
+            self.assertIn("leadership_findings", state)
             self.assertIn("evidence_subagent_cluster", state["business_model_findings"])
 
             report = (run_dir / "final_report.md").read_text(encoding="utf-8")
@@ -102,18 +148,78 @@ class ScaffoldRunTest(unittest.TestCase):
             self.assertIn("Alternative Data Signals", report)
             self.assertIn("Executive Video Transcript Evidence", report)
             self.assertIn("Right Business / People / Price Checklist", report)
+            self.assertIn("Right people / 正确的人和组织:", report)
             self.assertIn("Data Linkage", report)
 
             financial_report = (run_dir / "financial_results_report.md").read_text(encoding="utf-8")
             self.assertIn("Financial Results Report", financial_report)
+            self.assertIn("Chinese easy-reading financial report", financial_report)
             self.assertIn("Financial Quality Questions", financial_report)
+            self.assertIn("为什么看这些数", financial_report)
             self.assertIn("Annual Financial History", financial_report)
+            self.assertIn("Valuation Metrics", financial_report)
+            self.assertIn("Material Event Scan", financial_report)
+            self.assertIn("Financial Report Pack", financial_report)
             self.assertIn("Extraction And Verification", financial_report)
+
+            pack = json.loads((run_dir / "financial_report_pack.json").read_text(encoding="utf-8"))
+            self.assertEqual(pack["schema_version"], "financial_report_pack_v1")
+            self.assertIn("material_event_scan", pack)
+            self.assertIn("human_review_flags", pack)
+
+            evidence_pack = json.loads((run_dir / "official_report_evidence_pack.json").read_text(encoding="utf-8"))
+            self.assertEqual(evidence_pack["schema_version"], "official_report_evidence_pack_v1")
+            self.assertIn("question_answers", evidence_pack)
+            self.assertIn("decision_relevant_narratives", evidence_pack)
+
+            evidence_report = (run_dir / "official_report_evidence_report.md").read_text(encoding="utf-8")
+            self.assertIn("官方报告证据与解释", evidence_report)
+            self.assertIn("第一层问题复核", evidence_report)
+            self.assertIn("决策相关官方叙事", evidence_report)
+
+            easy_report = (run_dir / "financial_easy_reading_report.md").read_text(encoding="utf-8")
+            self.assertIn("财务报告易读版", easy_report)
+            self.assertIn("一页结论", easy_report)
+            self.assertIn("核心判断", easy_report)
+            self.assertIn("关键证据", easy_report)
+            self.assertIn("下一步要证伪", easy_report)
+            self.assertIn("财务证据", easy_report)
+            self.assertIn("披露边界与口径", easy_report)
+            self.assertIn("三年财务趋势", easy_report)
+            self.assertIn("季度趋势与拐点", easy_report)
+            self.assertIn("资产负债表与现金缓冲", easy_report)
+            self.assertIn("关键问题与红旗", easy_report)
+            self.assertIn("来源与范围", easy_report)
+            self.assertIn("需要人工复核的关键点", easy_report)
+            self.assertIn("当前判断", easy_report)
+            self.assertIn("判断", easy_report)
+            self.assertLess(easy_report.index("## 后续跟踪清单"), easy_report.index("### 披露边界与口径"))
 
             business_model_report = (run_dir / "business_model_report.md").read_text(encoding="utf-8")
             self.assertIn("Business Model / Moat Report", business_model_report)
             self.assertIn("Official Report Evidence", business_model_report)
             self.assertIn("Business-Model Open Issues", business_model_report)
+
+            right_people_report = (run_dir / "right_people_report.md").read_text(encoding="utf-8")
+            self.assertIn("Right People / Management Quality Report", right_people_report)
+            self.assertIn("Evidence Framework", right_people_report)
+            self.assertIn("Evidence Buckets", right_people_report)
+            self.assertIn("Right People Decision", right_people_report)
+            self.assertIn("Scorecard", right_people_report)
+            self.assertIn("Management Quality Evidence", right_people_report)
+            self.assertIn("Right People Checklist", right_people_report)
+
+            right_people_zh_report = (run_dir / "right_people_report.zh.md").read_text(encoding="utf-8")
+            self.assertIn("正确的人 / 管理层质量报告", right_people_zh_report)
+            self.assertIn("证据分类框架", right_people_zh_report)
+            self.assertIn("证据分类", right_people_zh_report)
+            self.assertIn("正确的人决策", right_people_zh_report)
+            self.assertIn("评分卡", right_people_zh_report)
+            self.assertIn("关键证据摘录", right_people_zh_report)
+            self.assertIn("官方申报文件摘录", right_people_zh_report)
+            self.assertIn("财务行为证据", right_people_zh_report)
+            self.assertIn("管理层质量证据", right_people_zh_report)
+            self.assertIn("正确的人检查清单", right_people_zh_report)
 
             linkage = (run_dir / "data_linkage.md").read_text(encoding="utf-8")
             self.assertIn("Source Inventory", linkage)
@@ -123,6 +229,7 @@ class ScaffoldRunTest(unittest.TestCase):
             self.assertIn("IR PDF Cross-Validation Linkage", linkage)
             self.assertIn("Alternative Data Linkage", linkage)
             self.assertIn("Executive Transcript Evidence Linkage", linkage)
+            self.assertIn("Right People Linkage", linkage)
 
     def test_alternative_data_agent_normalizes_seed_observations(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -548,6 +655,54 @@ class ScaffoldRunTest(unittest.TestCase):
         self.assertIn("video_manifest", findings)
         self.assertEqual(findings["video_manifest"]["record_count"], 0)
 
+    def test_official_event_source_candidates_filter_press_release_mirrors(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            registry_path = temp_path / "registry.json"
+            registry_path.write_text(
+                json.dumps(
+                    {
+                        "status": "test_source_candidates",
+                        "company_id": "pdd",
+                        "provider_chain": ["link_only_source_candidates"],
+                        "sources": [
+                            {
+                                "source_id": "pdd_test_source_candidates",
+                                "name": "PDD test source candidates",
+                                "adapter": "source_candidates",
+                                "provider": "source_candidate_registry",
+                                "candidates": [
+                                    {
+                                        "provider": "stockanalysis",
+                                        "source_url": "https://stockanalysis.com/stocks/pdd/transcripts/",
+                                    },
+                                    {
+                                        "provider": "globenewswire_release",
+                                        "source_url": "https://www.globenewswire.com/news-release/example.html",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            findings = collect_official_event_transcripts(
+                company={"company_id": "pdd", "legal_name": "PDD Holdings Inc."},
+                cache_root=temp_path / "official_event_transcripts",
+                offline=True,
+                registry_path=registry_path,
+            )
+
+            result = findings["source_results"][0]
+            candidate_path = Path(result["cache_paths"][0])
+            candidates = json.loads(candidate_path.read_text(encoding="utf-8"))["candidates"]
+
+        self.assertEqual(result["source_candidate_count"], 1)
+        self.assertEqual(result["blocked_source_candidate_count"], 1)
+        self.assertEqual(candidates[0]["provider"], "stockanalysis")
+
     def test_official_event_local_transcript_file_collects_question_pack(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -627,6 +782,62 @@ class ScaffoldRunTest(unittest.TestCase):
             if prior is not None:
                 os.environ["GEMINI_API_KEY"] = prior
 
+    def test_deep_filing_stack_policy_keeps_prospectus_and_auditor_materials(self) -> None:
+        prospectus = classify_sec_document_text(
+            filename="pdd-f1.htm",
+            form="F-1",
+            role="primary",
+            text="Risk Factors Use of proceeds Management Discussion and Analysis",
+        )
+        auditor = classify_sec_document_text(
+            filename="auditor-change.htm",
+            form="6-K",
+            role="exhibit_1",
+            text="Change in registrant's certifying accountant and independent registered public accounting firm.",
+        )
+        capital_markets = classify_sec_document_text(
+            filename="offering.htm",
+            form="424B5",
+            role="primary",
+            text="Prospectus supplement for an offering of American depositary shares.",
+        )
+
+        self.assertEqual(prospectus["category"], "KEEP_CORE_PROSPECTUS")
+        self.assertEqual(auditor["category"], "KEEP_MONITORING_AUDITOR_ACCOUNTING")
+        self.assertEqual(capital_markets["category"], "KEEP_MONITORING_FINANCING_CAPITAL_MARKETS")
+
+    def test_deep_filing_stack_documents_do_not_enter_financial_number_extraction(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            sec = SecClient(cache_dir=Path(temp_dir) / "sec")
+            filing = {
+                "accession_number": "0000000000-18-000001",
+                "filing_date": "2018-06-29",
+                "report_date": None,
+                "form": "F-1",
+                "primary_document": "pdd-f1.htm",
+                "primary_doc_description": "F-1",
+                "archive_url": "https://www.sec.gov/Archives/edgar/data/1/000000000018000001/pdd-f1.htm",
+                "cik": "1",
+                "cik_padded": "0000000001",
+                "download_priority": 5,
+            }
+            document = sec.save_filing_bytes(
+                filing,
+                "pdd-f1.htm",
+                b"<html><body>Prospectus Risk Factors Use of proceeds VIE ownership</body></html>",
+                role="primary",
+            )
+            document.update(
+                {
+                    "source_id": "sec_edgar_pdd",
+                    "document_type": "F-1:primary",
+                }
+            )
+
+        self.assertTrue(SecClient.is_deep_research_filing(filing))
+        self.assertTrue(is_deep_research_document(document))
+        self.assertFalse(is_financial_extraction_document(document))
+
     def test_xbrl_mapping_keeps_pretax_and_sbc_concepts_separate(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "fixture.htm"
@@ -651,7 +862,7 @@ class ScaffoldRunTest(unittest.TestCase):
                 "downloaded_file": "fixture.htm",
                 "form": "20-F",
                 "local_path": str(path),
-                "source_id": "test",
+                "source_id": "sec_edgar_test",
                 "filing_date": "2022-04-25",
                 "report_date": "2021-12-31",
             }
@@ -669,6 +880,71 @@ class ScaffoldRunTest(unittest.TestCase):
                     for result in verify_financial_facts(extraction["raw_facts"])
                     if result.get("status") == "material_conflict"
                 ]
+            )
+
+    def test_xbrl_extraction_adds_deeper_balance_sheet_share_and_cash_quality_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "deeper_fixture.htm"
+            path.write_text(
+                """
+                <html xmlns:ix="http://www.xbrl.org/2013/inlineXBRL" xmlns:xbrli="http://www.xbrl.org/2003/instance">
+                  <xbrli:context id="Duration_1_1_2025_To_12_31_2025">
+                    <xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0001737806</xbrli:identifier></xbrli:entity>
+                    <xbrli:period><xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate></xbrli:period>
+                  </xbrli:context>
+                  <xbrli:context id="Instant_12_31_2025">
+                    <xbrli:entity><xbrli:identifier scheme="http://www.sec.gov/CIK">0001737806</xbrli:identifier></xbrli:entity>
+                    <xbrli:period><xbrli:instant>2025-12-31</xbrli:instant></xbrli:period>
+                  </xbrli:context>
+                  <ix:nonFraction name="us-gaap:Revenues" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">1000</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:CostOfRevenue" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">400</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:OperatingIncomeLoss" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">300</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:NetIncomeLoss" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">250</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:NetCashProvidedByUsedInOperatingActivities" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">220</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:PaymentsToAcquirePropertyPlantAndEquipment" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">50</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:ShareBasedCompensation" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">30</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:DepreciationAndAmortization" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">40</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:WeightedAverageNumberOfSharesOutstandingBasic" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_shares" scale="0">5900</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:EarningsPerShareDiluted" contextRef="Duration_1_1_2025_To_12_31_2025" unitRef="Unit_pure" scale="0">3.21</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:CashAndCashEquivalentsAtCarryingValue" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">500</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:ShortTermInvestments" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">700</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:AssetsCurrent" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">1400</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:LiabilitiesCurrent" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">600</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:Assets" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">1800</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:Liabilities" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">800</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:AccountsReceivableNetCurrent" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">120</ix:nonFraction>
+                  <ix:nonFraction name="us-gaap:AccountsPayableCurrent" contextRef="Instant_12_31_2025" unitRef="Unit_Standard_CNY" scale="0">210</ix:nonFraction>
+                </html>
+                """,
+                encoding="utf-8",
+            )
+            document = {
+                "document_id": "fixture:deeper_fixture.htm",
+                "document_type": "20-F:primary",
+                "downloaded_file": "deeper_fixture.htm",
+                "form": "20-F",
+                "local_path": str(path),
+                "source_id": "sec_edgar_test",
+                "filing_date": "2026-04-25",
+                "report_date": "2025-12-31",
+            }
+
+            extraction = extract_financial_facts_from_documents([document])
+            facts = {fact["metric"]: fact for fact in extraction["selected_facts"]}
+            flag_ids = {flag["flag_id"] for flag in extraction["summary"]["review_flags"]}
+
+            self.assertEqual(facts["free_cash_flow"]["value"], 170)
+            self.assertEqual(facts["basic_shares"]["value"], 5_900_000)
+            self.assertEqual(facts["diluted_eps"]["value"], 3.21)
+            self.assertEqual(facts["short_term_investments"]["value"], 700)
+            self.assertEqual(facts["current_assets"]["value"], 1400)
+            self.assertEqual(facts["current_liabilities"]["value"], 600)
+            self.assertEqual(facts["accounts_receivable"]["value"], 120)
+            self.assertEqual(facts["accounts_payable"]["value"], 210)
+            self.assertIn("interest_bearing_debt_not_explicitly_extracted", flag_ids)
+            self.assertEqual(
+                extraction["summary"]["coverage"]["question_coverage"][2]["question_id"],
+                "cash_quality",
             )
 
     def test_xbrl_extraction_skips_sec_index_helper_files(self) -> None:
@@ -695,7 +971,7 @@ class ScaffoldRunTest(unittest.TestCase):
                         "downloaded_file": "0000000000-index.html",
                         "form": "6-K",
                         "local_path": str(path),
-                        "source_id": "test",
+                        "source_id": "sec_edgar_test",
                     }
                 ]
             )
@@ -744,7 +1020,7 @@ class ScaffoldRunTest(unittest.TestCase):
                 "form": "6-K",
                 "local_path": str(path),
                 "research_category": "KEEP_CORE_INTERIM_EARNINGS",
-                "source_id": "test",
+                "source_id": "sec_edgar_test",
                 "filing_date": "2025-11-18",
                 "report_date": "2025-09-30",
             }
@@ -760,6 +1036,140 @@ class ScaffoldRunTest(unittest.TestCase):
             self.assertEqual(rows[0]["operating_cash_flow"], 45_000_000)
             self.assertEqual(rows[0]["cash"], 92_000_000)
             self.assertEqual(rows[0]["diluted_shares"], 5_950_000)
+
+    def test_earnings_release_extraction_handles_million_unit_release_tables(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "earnings_millions.htm"
+            path.write_text(
+                """
+                <html>
+                <body>
+                PDD Holdings Announces First Quarter 2026 Unaudited Financial Results.
+                The Company announced financial results for the first quarter ended March 31, 2026.
+                Revenues from online marketing services and others were RMB49.9 billion.
+                Revenues from transaction services were RMB56.3 billion.
+                <table>
+                  <tr><td>PDD HOLDINGS INC.</td></tr>
+                  <tr><td>CONDENSED CONSOLIDATED STATEMENTS OF INCOME</td></tr>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td></td><td>For the three months ended March 31,</td></tr>
+                  <tr><td></td><td>2025</td><td>2026</td><td>2026 US$</td></tr>
+                  <tr><td>Revenues</td><td>95,672</td><td>106,229</td><td>15,400</td></tr>
+                  <tr><td>Costs of revenues</td><td>(40,946)</td><td>(46,893)</td><td>(6,798)</td></tr>
+                  <tr><td>Operating profit</td><td>16,086</td><td>19,566</td><td>2,837</td></tr>
+                  <tr><td>Net income</td><td>14,742</td><td>12,547</td><td>1,819</td></tr>
+                </table>
+                <table>
+                  <tr><td>PDD HOLDINGS INC.</td></tr>
+                  <tr><td>CONDENSED CONSOLIDATED BALANCE SHEETS</td></tr>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td></td><td>December 31, 2025</td><td>March 31, 2026</td><td>US$</td></tr>
+                  <tr><td>Cash and cash equivalents</td><td>108,901</td><td>123,041</td><td>17,837</td></tr>
+                  <tr><td>Short-term investments</td><td>313,408</td><td>313,030</td><td>45,380</td></tr>
+                  <tr><td>Total current assets</td><td>518,000</td><td>525,000</td><td>76,100</td></tr>
+                  <tr><td>Total Assets</td><td>630,045</td><td>637,704</td><td>92,448</td></tr>
+                </table>
+                <table>
+                  <tr><td>PDD HOLDINGS INC.</td></tr>
+                  <tr><td>CONDENSED CONSOLIDATED BALANCE SHEETS</td></tr>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td></td><td>December 31, 2025</td><td>March 31, 2026</td><td>US$</td></tr>
+                  <tr><td>Total current liabilities</td><td>188,000</td><td>190,000</td><td>27,550</td></tr>
+                  <tr><td>Total Liabilities</td><td>216,660</td><td>214,277</td><td>31,064</td></tr>
+                </table>
+                <table>
+                  <tr><td>PDD HOLDINGS INC.</td></tr>
+                  <tr><td>CONDENSED CONSOLIDATED STATEMENTS OF CASH FLOWS</td></tr>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td>Net cash generated from operating activities</td><td>15,517</td><td>16,445</td><td>2,384</td></tr>
+                </table>
+                <table>
+                  <tr><td>Weighted-average number of ordinary shares outstanding (in millions):</td></tr>
+                  <tr><td>-Diluted</td><td>5,932</td><td>5,920</td><td>5,920</td></tr>
+                </table>
+                <table>
+                  <tr><td>PDD HOLDINGS INC.</td></tr>
+                  <tr><td>RECONCILIATION OF GAAP AND NON-GAAP RESULTS</td></tr>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td></td><td>For the three months ended March 31,</td></tr>
+                  <tr><td></td><td>2025</td><td>2026</td><td>2026 US$</td></tr>
+                  <tr><td>Share-based compensation expenses</td><td>1,800</td><td>2,100</td><td>304</td></tr>
+                  <tr><td>Non-GAAP operating profit</td><td>17,886</td><td>21,666</td><td>3,141</td></tr>
+                  <tr><td>Non-GAAP net income</td><td>16,542</td><td>14,647</td><td>2,123</td></tr>
+                </table>
+                </body>
+                </html>
+                """,
+                encoding="utf-8",
+            )
+            document = {
+                "document_id": "fixture:earnings_millions.htm",
+                "document_type": "company_release:earnings",
+                "downloaded_file": "earnings_millions.htm",
+                "form": "IR",
+                "local_path": str(path),
+                "research_category": "KEEP_CORE_INTERIM_EARNINGS",
+                "source_id": "sec_edgar_test",
+                "filing_date": "2026-05-27",
+                "report_date": "2026-03-31",
+            }
+
+            extraction = extract_financial_facts_from_documents([document])
+            facts = {
+                fact["metric"]: fact
+                for fact in extraction["selected_facts"]
+                if fact.get("end_date") == "2026-03-31"
+            }
+
+            self.assertEqual(facts["revenue"]["value"], 106_229_000_000)
+            self.assertEqual(facts["online_marketing_services_revenue"]["value"], 49_900_000_000)
+            self.assertEqual(facts["transaction_services_revenue"]["value"], 56_300_000_000)
+            self.assertEqual(facts["cash_and_short_term_investments"]["value"], 436_071_000_000)
+            self.assertEqual(facts["current_assets"]["value"], 525_000_000_000)
+            self.assertEqual(facts["current_liabilities"]["value"], 190_000_000_000)
+            self.assertEqual(facts["total_liabilities"]["value"], 214_277_000_000)
+            self.assertEqual(facts["diluted_shares"]["value"], 5_920_000_000)
+            self.assertEqual(facts["non_gaap_adjustment_share_based_compensation"]["value"], 2_100_000_000)
+            self.assertEqual(facts["non_gaap_operating_income"]["value"], 21_666_000_000)
+            self.assertEqual(facts["non_gaap_net_income"]["value"], 14_647_000_000)
+
+    def test_financial_extraction_rejects_third_party_release_mirrors(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "globenewswire_mirror.htm"
+            path.write_text(
+                """
+                <html>
+                <body>
+                PDD Holdings Announces First Quarter 2026 Unaudited Financial Results.
+                <table>
+                  <tr><td>(Amounts in millions of RMB and US$)</td></tr>
+                  <tr><td></td><td>For the three months ended March 31,</td></tr>
+                  <tr><td></td><td>2025</td><td>2026</td><td>2026 US$</td></tr>
+                  <tr><td>Revenues</td><td>95,672</td><td>106,229</td><td>15,400</td></tr>
+                  <tr><td>Operating profit</td><td>16,086</td><td>19,566</td><td>2,837</td></tr>
+                  <tr><td>Net income</td><td>14,742</td><td>12,547</td><td>1,819</td></tr>
+                </table>
+                </body>
+                </html>
+                """,
+                encoding="utf-8",
+            )
+            document = {
+                "document_id": "pdd_globenewswire:2026-05-27:q1_2026_results",
+                "document_type": "company_release:earnings",
+                "downloaded_file": "globenewswire_mirror.htm",
+                "form": "IR",
+                "local_path": str(path),
+                "research_category": "KEEP_CORE_INTERIM_EARNINGS",
+                "source_id": "pdd_official_globenewswire_release",
+                "filing_date": "2026-05-27",
+                "report_date": "2026-03-31",
+            }
+
+            extraction = extract_financial_facts_from_documents([document])
+
+            self.assertEqual(extraction["summary"]["raw_fact_count"], 0)
+            self.assertEqual(extraction["summary"]["selected_fact_count"], 0)
 
     def test_manual_market_inputs_convert_market_cap_to_cny(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -796,9 +1206,11 @@ class ScaffoldRunTest(unittest.TestCase):
             _metric_fact("operating_cash_flow", 200, period_type="annual"),
             _metric_fact("stock_based_compensation", 20, period_type="annual"),
             _metric_fact("depreciation_and_amortization", 30, period_type="annual"),
+            _metric_fact("net_income", 150, period_type="annual"),
             _metric_fact("free_cash_flow", 120, period_type="annual"),
             _metric_fact("cash", 100, period_type="instant"),
             _metric_fact("debt", 10, period_type="instant"),
+            _metric_fact("investment_portfolio", 500, period_type="instant"),
         ]
         market_inputs = {
             "status": "input_available",
@@ -815,24 +1227,368 @@ class ScaffoldRunTest(unittest.TestCase):
             "review_required": False,
         }
 
-        metrics = {
+        financial_metrics = {
+            metric["formula_id"]: metric
+            for metric in calculate_v1_financial_metrics(facts)
+        }
+        valuation_metrics = {
+            metric["formula_id"]: metric
+            for metric in calculate_v1_valuation_metrics(
+                facts,
+                market_inputs=market_inputs,
+                financial_metrics=list(financial_metrics.values()),
+            )
+        }
+        combined_metrics = {
             metric["formula_id"]: metric
             for metric in calculate_v1_metrics(facts, market_inputs=market_inputs)
         }
-        enterprise_value = metrics["enterprise_value_v1"]["annual_results"][0]
-        true_yield = metrics["true_yield_v1"]["annual_results"][0]
-        fcf_yield = metrics["free_cash_flow_yield_v1"]["annual_results"][0]
-        financial_quality = metrics["financial_quality_questions_v1"]
+        enterprise_value = valuation_metrics["enterprise_value_v1"]["annual_results"][0]
+        true_yield = valuation_metrics["true_yield_v1"]["annual_results"][0]
+        fcf_yield = valuation_metrics["free_cash_flow_yield_v1"]["annual_results"][0]
+        adjusted_yield = valuation_metrics["investment_adjusted_operating_yield_v1"]["annual_results"][0]
 
+        self.assertIn("owner_earnings_v1", financial_metrics)
+        self.assertNotIn("financial_quality_questions_v1", financial_metrics)
+        self.assertNotIn("enterprise_value_v1", financial_metrics)
+        self.assertIn("enterprise_value_v1", valuation_metrics)
+        self.assertIn("enterprise_value_v1", combined_metrics)
         self.assertEqual(enterprise_value["value"], 6910)
         self.assertAlmostEqual(true_yield["value"], 150 / 6910)
         self.assertAlmostEqual(fcf_yield["value"], 120 / 6910)
+        self.assertEqual(adjusted_yield["operating_enterprise_value"], 6410)
+        self.assertAlmostEqual(adjusted_yield["value"], 150 / 6410)
+        self.assertAlmostEqual(adjusted_yield["free_cash_flow_yield"], 120 / 6410)
         self.assertFalse(enterprise_value["review_required"])
-        self.assertEqual(financial_quality["status"], "calculated")
-        self.assertEqual(
-            [question["question_id"] for question in financial_quality["questions"][:3]],
-            ["growth_quality", "profitability_with_scale", "cash_profit_quality"],
+        owner_result = financial_metrics["owner_earnings_v1"]["annual_results"][0]
+        cash_conversion = financial_metrics["cash_conversion_ratio_v1"]["annual_results"][0]
+        self.assertEqual(owner_result["display_name"], "owner earnings proxy")
+        self.assertTrue(owner_result["review_required"])
+        self.assertEqual(cash_conversion["display_name"], "CFO / net income")
+
+    def test_financial_metrics_cover_working_capital_tax_growth_sources_and_trend(self) -> None:
+        facts = [
+            *_annual_metric_facts(
+                2024,
+                {
+                    "revenue": 1_000,
+                    "gross_profit": 500,
+                    "operating_income": 200,
+                    "pretax_income": 180,
+                    "tax_expense": 30,
+                    "net_income": 150,
+                    "operating_cash_flow": 160,
+                    "capex": 20,
+                    "free_cash_flow": 140,
+                    "cash_paid_for_taxes": 25,
+                    "cash": 300,
+                    "restricted_cash": 40,
+                    "short_term_investments": 120,
+                    "current_assets": 600,
+                    "current_liabilities": 300,
+                    "total_assets": 1_200,
+                    "total_liabilities": 500,
+                    "debt": 100,
+                    "debt_current": 20,
+                    "debt_noncurrent": 80,
+                    "accounts_receivable": 100,
+                    "inventory": 50,
+                    "accounts_payable": 80,
+                    "payable_to_merchants": 120,
+                    "merchant_deposits": 40,
+                    "deferred_revenue": 20,
+                    "accrued_expenses": 60,
+                    "online_marketing_services_revenue": 700,
+                    "transaction_services_revenue": 300,
+                    "diluted_shares": 1_000,
+                },
+            ),
+            *_annual_metric_facts(
+                2025,
+                {
+                    "revenue": 1_200,
+                    "gross_profit": 600,
+                    "operating_income": 210,
+                    "pretax_income": 200,
+                    "tax_expense": 40,
+                    "net_income": 140,
+                    "operating_cash_flow": 180,
+                    "capex": 30,
+                    "free_cash_flow": 150,
+                    "cash_paid_for_taxes": 30,
+                    "cash": 360,
+                    "restricted_cash": 60,
+                    "short_term_investments": 130,
+                    "current_assets": 720,
+                    "current_liabilities": 360,
+                    "total_assets": 1_400,
+                    "total_liabilities": 560,
+                    "debt": 100,
+                    "debt_current": 25,
+                    "debt_noncurrent": 75,
+                    "accounts_receivable": 150,
+                    "inventory": 55,
+                    "accounts_payable": 120,
+                    "payable_to_merchants": 190,
+                    "merchant_deposits": 55,
+                    "deferred_revenue": 35,
+                    "accrued_expenses": 80,
+                    "online_marketing_services_revenue": 750,
+                    "transaction_services_revenue": 450,
+                    "diluted_shares": 1_020,
+                },
+            ),
+            *_quarter_metric_facts(
+                "2025-01-01",
+                "2025-03-31",
+                {
+                    "revenue": 300,
+                    "operating_income": 60,
+                    "net_income": 45,
+                    "operating_cash_flow": 50,
+                    "cash": 365,
+                    "total_assets": 1_420,
+                    "total_liabilities": 565,
+                    "diluted_shares": 1_020,
+                },
+            ),
+            *_quarter_metric_facts(
+                "2026-01-01",
+                "2026-03-31",
+                {
+                    "revenue": 315,
+                    "operating_income": 40,
+                    "net_income": 42,
+                    "operating_cash_flow": 35,
+                    "cash": 370,
+                    "total_assets": 1_450,
+                    "total_liabilities": 590,
+                    "diluted_shares": 1_030,
+                    "online_marketing_services_revenue": 170,
+                    "transaction_services_revenue": 145,
+                    "non_gaap_operating_income": 52,
+                    "non_gaap_net_income": 60,
+                    "non_gaap_adjustment_share_based_compensation": 12,
+                    "non_gaap_adjustment_fair_value_changes": 4,
+                },
+            ),
+        ]
+
+        metrics = {
+            metric["formula_id"]: metric
+            for metric in calculate_v1_financial_metrics(facts)
+        }
+
+        working_capital = metrics["working_capital_quality_v1"]["annual_results"][-1]
+        tax_quality = metrics["tax_non_gaap_accounting_quality_v1"]
+        source_growth = metrics["source_of_growth_attribution_v1"]["annual_results"][-1]
+        balance_sheet = metrics["balance_sheet_risk_v1"]["annual_results"][-1]
+        interim_trend = metrics["latest_interim_trend_v1"]
+        diagnostic_findings = run_v1_financial_diagnostics(
+            extracted_facts=facts,
+            metrics=list(metrics.values()),
         )
+
+        self.assertEqual(working_capital["status"], "calculated")
+        self.assertAlmostEqual(working_capital["current_ratio"], 2.0)
+        self.assertIn("payable_to_merchants", {row["metric"] for row in working_capital["component_details"]})
+        self.assertEqual(tax_quality["status"], "calculated")
+        self.assertAlmostEqual(tax_quality["annual_results"][-1]["effective_tax_rate"], 0.2)
+        self.assertAlmostEqual(
+            tax_quality["latest_interim_non_gaap"]["non_gaap_net_income_uplift"],
+            (60 - 42) / 42,
+        )
+        self.assertEqual(source_growth["status"], "calculated")
+        self.assertAlmostEqual(source_growth["value"], 1.0)
+        self.assertEqual(balance_sheet["debt_maturity_profile"]["current_debt"], 25)
+        self.assertAlmostEqual(balance_sheet["restricted_cash_to_cash"], 60 / 360)
+        self.assertEqual(interim_trend["overall_status"], "trend_changed")
+        self.assertIn(
+            "tax_non_gaap_accounting_quality",
+            [question["question_id"] for question in diagnostic_findings["questions"]],
+        )
+        self.assertNotIn("financial_quality_questions_v1", metrics)
+
+    def test_material_event_scan_and_report_pack_capture_review_flags(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filing_path = Path(temp_dir) / "auditor-change.htm"
+            filing_path.write_text(
+                """
+                <html><body>
+                Changes in Registrant's Certifying Accountant.
+                The company appointed a new independent registered public accounting firm.
+                </body></html>
+                """,
+                encoding="utf-8",
+            )
+            documents = [
+                {
+                    "document_id": "fixture-6k-auditor-change",
+                    "source_id": "sec_edgar_fixture",
+                    "document_type": "6-K:exhibit_1",
+                    "form": "6-K",
+                    "filing_date": "2026-01-10",
+                    "local_path": str(filing_path),
+                    "source_url": "https://www.sec.gov/fixture",
+                }
+            ]
+            material_scan = scan_material_events(documents)
+            facts = [
+                *_annual_metric_facts(
+                    2024,
+                    {
+                        "revenue": 1_000,
+                        "gross_profit": 500,
+                        "operating_income": 200,
+                        "pretax_income": 180,
+                        "tax_expense": 30,
+                        "net_income": 150,
+                        "operating_cash_flow": 160,
+                        "capex": 20,
+                        "free_cash_flow": 140,
+                        "stock_based_compensation": 15,
+                        "depreciation_and_amortization": 25,
+                        "cash": 300,
+                        "total_assets": 1_200,
+                        "total_liabilities": 500,
+                    },
+                ),
+                *_annual_metric_facts(
+                    2025,
+                    {
+                        "revenue": 1_100,
+                        "gross_profit": 530,
+                        "operating_income": 210,
+                        "pretax_income": 190,
+                        "tax_expense": 35,
+                        "net_income": 155,
+                        "operating_cash_flow": 170,
+                        "capex": 25,
+                        "free_cash_flow": 145,
+                        "stock_based_compensation": 20,
+                        "depreciation_and_amortization": 30,
+                        "cash": 320,
+                        "total_assets": 1_250,
+                        "total_liabilities": 520,
+                    },
+                ),
+            ]
+            metrics = calculate_v1_financial_metrics(facts)
+            diagnostics = run_v1_financial_diagnostics(extracted_facts=facts, metrics=metrics)
+            state = {
+                "run_id": "fixture-run",
+                "run_dir": temp_dir,
+                "company_query": "FixtureCo",
+                "canonical_company": {"legal_name": "FixtureCo Inc."},
+                "market": "us",
+                "source_candidates": [],
+                "approved_sources": [],
+                "documents": documents,
+                "extracted_facts": facts,
+                "raw_extracted_facts": facts,
+                "extraction_summary": {"coverage": {"priority_a": {"missing": []}, "priority_b": {"missing": []}}},
+                "metrics": metrics,
+                "valuation_metrics": [],
+                "diagnostic_findings": diagnostics,
+                "material_event_scan": material_scan,
+                "verification_results": [],
+                "ir_cross_validation": {},
+            }
+
+            self.assertEqual(material_scan["status"], "material_events_found")
+            self.assertGreaterEqual(material_scan["high_priority_event_count"], 1)
+            pack = build_financial_report_pack(state)
+            self.assertEqual(pack["schema_version"], "financial_report_pack_v1")
+            self.assertEqual(pack["material_event_scan"]["material_event_count"], 1)
+            self.assertTrue(
+                any(flag.get("source") == "material_event_scan" for flag in pack["human_review_flags"])
+            )
+            easy_report = build_financial_easy_reading_report(
+                pack,
+                audit_status="Draft pending audit review",
+            )
+            self.assertIn("财务报告易读版", easy_report)
+            self.assertIn("重大事项扫描", easy_report)
+            self.assertIn("关键问题与红旗", easy_report)
+            self.assertIn("当前判断", easy_report)
+            self.assertIn("fixture-6k-auditor-change", easy_report)
+
+    def test_material_event_scan_ignores_routine_earnings_release_debt_mentions(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filing_path = Path(temp_dir) / "earnings-release.htm"
+            filing_path.write_text(
+                """
+                <html><body>
+                PDD Holdings Announces First Quarter 2026 Unaudited Financial Results.
+                Non-GAAP financial measures exclude interest expenses related to the
+                convertible bonds amortization to face value.
+                </body></html>
+                """,
+                encoding="utf-8",
+            )
+            documents = [
+                {
+                    "document_id": "fixture-earnings-release",
+                    "source_id": "sec_edgar_fixture",
+                    "document_type": "6-K:exhibit_1",
+                    "form": "6-K",
+                    "filing_date": "2026-05-20",
+                    "local_path": str(filing_path),
+                    "source_url": "https://www.sec.gov/fixture",
+                }
+            ]
+
+            material_scan = scan_material_events(documents)
+
+            self.assertEqual(material_scan["status"], "no_material_events_found")
+            self.assertEqual(material_scan["material_event_count"], 0)
+
+    def test_material_event_scan_uses_latest_annual_report_cutoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            old_event_path = Path(temp_dir) / "old-auditor-change.htm"
+            old_event_path.write_text(
+                "Changes in Registrant's Certifying Accountant.",
+                encoding="utf-8",
+            )
+            annual_path = Path(temp_dir) / "annual.htm"
+            annual_path.write_text("Annual report", encoding="utf-8")
+            new_event_path = Path(temp_dir) / "new-auditor-change.htm"
+            new_event_path.write_text(
+                "Changes in Registrant's Certifying Accountant.",
+                encoding="utf-8",
+            )
+            documents = [
+                {
+                    "document_id": "old-event",
+                    "source_id": "sec_edgar_fixture",
+                    "document_type": "6-K:exhibit_1",
+                    "form": "6-K",
+                    "filing_date": "2025-01-01",
+                    "local_path": str(old_event_path),
+                },
+                {
+                    "document_id": "latest-annual",
+                    "source_id": "sec_edgar_fixture",
+                    "document_type": "20-F:primary",
+                    "form": "20-F",
+                    "filing_date": "2026-04-29",
+                    "local_path": str(annual_path),
+                },
+                {
+                    "document_id": "new-event",
+                    "source_id": "sec_edgar_fixture",
+                    "document_type": "6-K:exhibit_1",
+                    "form": "6-K",
+                    "filing_date": "2026-05-01",
+                    "local_path": str(new_event_path),
+                },
+            ]
+
+            material_scan = scan_material_events(documents)
+
+            self.assertEqual(material_scan["cutoff_filing_date"], "2026-04-29")
+            self.assertEqual(material_scan["material_event_count"], 1)
+            self.assertEqual(material_scan["events"][0]["document_id"], "new-event")
 
     def test_market_data_parsers_extract_pdd_quote_fx_and_share_structure(self) -> None:
         share_structure = parse_pdd_share_structure_text(
@@ -934,6 +1690,9 @@ class ScaffoldRunTest(unittest.TestCase):
         Amortisation of intangible assets and land use rights 8,553 8,478 7,546 33,229 28,881
         Equity-settled share-based compensation 5,922 6,341 5,662 25,660 20,702
 
+        INVESTMENTS HELD
+        As at 31 December 2025, our investment portfolio amounted to approximately RMB957,219 million (31 December 2024: RMB817,687 million) as recorded in the consolidated statement of financial position.
+
         Consolidated Statement of Cash Flows
         For the year ended 31 December 2025
         Net cash flows generated from operating activities 303,052 258,521
@@ -960,6 +1719,8 @@ class ScaffoldRunTest(unittest.TestCase):
         self.assertEqual(by_metric_year[("capex", "2025")], 112_881_000_000)
         self.assertEqual(by_metric_year[("stock_based_compensation", "2025")], 25_660_000_000)
         self.assertEqual(by_metric_year[("depreciation_and_amortization", "2025")], 66_028_000_000)
+        self.assertEqual(by_metric_year[("investment_portfolio", "2025")], 957_219_000_000)
+        self.assertEqual(by_metric_year[("investment_portfolio", "2024")], 817_687_000_000)
 
     def test_tencent_interim_report_text_extraction_reads_quarter_and_half_year_facts(self) -> None:
         text = """
@@ -1046,6 +1807,78 @@ def _metric_fact(metric: str, value: int, *, period_type: str) -> dict:
     else:
         fact.update({"instant": "2025-12-31"})
     return fact
+
+
+def _annual_metric_facts(year: int, values: dict[str, int]) -> list[dict]:
+    facts = []
+    for metric, value in values.items():
+        instant_metric = metric in {
+            "cash",
+            "restricted_cash",
+            "short_term_investments",
+            "current_assets",
+            "current_liabilities",
+            "total_assets",
+            "total_liabilities",
+            "debt",
+            "debt_current",
+            "debt_noncurrent",
+            "accounts_receivable",
+            "inventory",
+            "accounts_payable",
+            "accounts_payable_and_accrued_expenses",
+            "payable_to_merchants",
+            "merchant_deposits",
+            "deferred_revenue",
+            "accrued_expenses",
+        }
+        facts.append(
+            {
+                "fact_id": f"fixture:{year}:{metric}",
+                "metric": metric,
+                "value": value,
+                "unit": "shares" if metric.endswith("_shares") or metric == "diluted_shares" else "CNY",
+                "period_type": "instant" if instant_metric else "annual",
+                "start_date": None if instant_metric else f"{year}-01-01",
+                "end_date": f"{year}-12-31",
+                "instant": f"{year}-12-31" if instant_metric else None,
+                "filing_date": f"{year + 1}-04-01",
+            }
+        )
+    return facts
+
+
+def _quarter_metric_facts(start_date: str, end_date: str, values: dict[str, int]) -> list[dict]:
+    instant_metrics = {
+        "cash",
+        "cash_and_short_term_investments",
+        "short_term_investments",
+        "restricted_cash",
+        "current_assets",
+        "current_liabilities",
+        "total_assets",
+        "total_liabilities",
+        "debt",
+        "debt_current",
+        "debt_noncurrent",
+    }
+    facts = []
+    for metric, value in values.items():
+        is_instant = metric in instant_metrics
+        facts.append(
+            {
+                "fact_id": f"fixture:{end_date}:{metric}",
+                "metric": metric,
+                "value": value,
+                "unit": "shares" if metric.endswith("_shares") or metric == "diluted_shares" else "CNY",
+                "period_type": "instant" if is_instant else "quarter",
+                "start_date": None if is_instant else start_date,
+                "end_date": end_date,
+                "instant": end_date if is_instant else None,
+                "filing_date": "2026-05-01",
+            }
+        )
+    return facts
 
 
 if __name__ == "__main__":

@@ -83,6 +83,22 @@ TARGET_TAGS: dict[str, dict[str, Any]] = {
         "label": "Cash and cash equivalents",
         "tags": ["us-gaap:CashAndCashEquivalentsAtCarryingValue"],
     },
+    "short_term_investments": {
+        "label": "Short-term investments",
+        "tags": [
+            "us-gaap:ShortTermInvestments",
+            "us-gaap:ShortTermInvestmentsAvailableForSale",
+            "us-gaap:MarketableSecuritiesCurrent",
+        ],
+    },
+    "restricted_cash": {
+        "label": "Restricted cash",
+        "tags": [
+            "us-gaap:RestrictedCashAndCashEquivalentsAtCarryingValue",
+            "us-gaap:RestrictedCashCurrent",
+            "us-gaap:RestrictedCashNoncurrent",
+        ],
+    },
     "debt": {
         "label": "Interest-bearing debt",
         "tags": [
@@ -114,17 +130,118 @@ TARGET_TAGS: dict[str, dict[str, Any]] = {
         "label": "Depreciation and amortization",
         "tags": ["us-gaap:DepreciationAndAmortization"],
     },
+    "basic_shares": {
+        "label": "Basic shares",
+        "tags": ["us-gaap:WeightedAverageNumberOfSharesOutstandingBasic"],
+    },
     "diluted_shares": {
         "label": "Diluted shares",
         "tags": ["us-gaap:WeightedAverageNumberOfDilutedSharesOutstanding"],
+    },
+    "basic_eps": {
+        "label": "Basic EPS",
+        "tags": ["us-gaap:EarningsPerShareBasic"],
+    },
+    "diluted_eps": {
+        "label": "Diluted EPS",
+        "tags": ["us-gaap:EarningsPerShareDiluted"],
+    },
+    "current_assets": {
+        "label": "Current assets",
+        "tags": ["us-gaap:AssetsCurrent"],
     },
     "total_assets": {
         "label": "Total assets",
         "tags": ["us-gaap:Assets"],
     },
+    "current_liabilities": {
+        "label": "Current liabilities",
+        "tags": ["us-gaap:LiabilitiesCurrent"],
+    },
     "total_liabilities": {
         "label": "Total liabilities",
         "tags": ["us-gaap:Liabilities"],
+    },
+    "accounts_receivable": {
+        "label": "Accounts receivable",
+        "tags": ["us-gaap:AccountsReceivableNetCurrent"],
+    },
+    "inventory": {
+        "label": "Inventory",
+        "tags": ["us-gaap:InventoryNet"],
+    },
+    "accounts_payable": {
+        "label": "Accounts payable",
+        "tags": ["us-gaap:AccountsPayableCurrent"],
+    },
+    "accounts_payable_and_accrued_expenses": {
+        "label": "Accounts payable and accrued liabilities",
+        "tags": ["us-gaap:AccountsPayableAndAccruedLiabilitiesCurrent"],
+    },
+    "payable_to_merchants": {
+        "label": "Payable to merchants",
+        "tags": ["pdd:PayableToMerchantsCurrent"],
+    },
+    "accrued_expenses": {
+        "label": "Accrued expenses and other current liabilities",
+        "tags": [
+            "us-gaap:AccruedLiabilitiesCurrent",
+            "us-gaap:AccruedIncomeTaxesCurrent",
+        ],
+    },
+    "deferred_revenue": {
+        "label": "Deferred revenue / contract liabilities",
+        "tags": [
+            "us-gaap:ContractWithCustomerLiabilityCurrent",
+            "us-gaap:DeferredRevenueCurrent",
+            "us-gaap:DeferredRevenueAndCreditsCurrent",
+            "pdd:AdvancesToCustomerAndDeferredRevenueCurrent",
+        ],
+    },
+    "merchant_deposits": {
+        "label": "Merchant / customer deposits",
+        "tags": [
+            "us-gaap:DepositLiabilityCurrent",
+            "pdd:MerchantDepositsCurrent",
+        ],
+    },
+    "change_in_payable_to_merchants": {
+        "label": "Change in payables to merchants",
+        "tags": ["pdd:IncreaseDecreaseInPayablesToMerchants"],
+    },
+    "change_in_merchant_deposits": {
+        "label": "Change in merchant deposits",
+        "tags": ["pdd:IncreaseDecreaseInMerchantDeposits"],
+    },
+    "change_in_deferred_revenue": {
+        "label": "Change in advances to customers and deferred revenue",
+        "tags": ["pdd:IncreaseDecreaseInAdvancesToCustomersAndDeferredRevenue"],
+    },
+    "cash_paid_for_taxes": {
+        "label": "Cash paid for income taxes",
+        "tags": ["us-gaap:IncomeTaxesPaidNet"],
+    },
+    "cash_paid_for_interest": {
+        "label": "Cash paid for interest",
+        "tags": ["us-gaap:InterestPaidNet"],
+    },
+    "equity_method_income": {
+        "label": "Equity-method income / loss",
+        "tags": ["us-gaap:IncomeLossFromEquityMethodInvestments"],
+    },
+    "investment_income": {
+        "label": "Investment income",
+        "tags": [
+            "us-gaap:InvestmentIncomeNet",
+            "us-gaap:InvestmentIncomeInterest",
+        ],
+    },
+    "impairment": {
+        "label": "Impairment charges",
+        "tags": [
+            "us-gaap:ImpairmentOfGoodwillAndIndefiniteLivedIntangibleAssets",
+            "us-gaap:ImpairmentOfIntangibleAssetsExcludingGoodwill",
+        ],
     },
 }
 
@@ -133,6 +250,102 @@ TAG_TO_METRIC = {
     for metric, config in TARGET_TAGS.items()
     for tag in config["tags"]
 }
+
+CORE_PRIORITY_A_METRICS = [
+    "revenue",
+    "cost_of_revenue",
+    "gross_profit",
+    "operating_income",
+    "pretax_income",
+    "tax_expense",
+    "net_income",
+    "operating_cash_flow",
+    "capex",
+    "free_cash_flow",
+    "cash",
+    "total_assets",
+    "total_liabilities",
+    "diluted_shares",
+]
+
+CORE_PRIORITY_B_METRICS = [
+    "online_marketing_services_revenue",
+    "transaction_services_revenue",
+    "sales_and_marketing_expense",
+    "research_and_development_expense",
+    "general_and_administrative_expense",
+    "stock_based_compensation",
+    "depreciation_and_amortization",
+    "short_term_investments",
+    "restricted_cash",
+    "current_assets",
+    "current_liabilities",
+    "basic_shares",
+    "basic_eps",
+    "diluted_eps",
+    "debt",
+    "debt_current",
+    "debt_noncurrent",
+    "accounts_receivable",
+    "inventory",
+    "accounts_payable",
+    "accounts_payable_and_accrued_expenses",
+    "payable_to_merchants",
+    "accrued_expenses",
+    "deferred_revenue",
+    "merchant_deposits",
+    "change_in_payable_to_merchants",
+    "change_in_merchant_deposits",
+    "change_in_deferred_revenue",
+    "cash_paid_for_taxes",
+    "cash_paid_for_interest",
+    "investment_income",
+    "equity_method_income",
+    "impairment",
+]
+
+FINANCIAL_QUESTION_COVERAGE = [
+    {
+        "question_id": "growth_source",
+        "question": "收入增长来自哪里？ / Where does revenue growth come from?",
+        "core_metrics": ["revenue"],
+        "supporting_metrics": [
+            "online_marketing_services_revenue",
+            "transaction_services_revenue",
+        ],
+    },
+    {
+        "question_id": "margin_change",
+        "question": "毛利率、经营利润率有没有变化？ / Are gross and operating margins changing?",
+        "core_metrics": ["revenue", "gross_profit", "operating_income"],
+        "supporting_metrics": ["cost_of_revenue", "sales_and_marketing_expense"],
+    },
+    {
+        "question_id": "cash_quality",
+        "question": "现金流质量好不好？这个公司赚的钱是真钱吗？ / Is cash-flow quality good?",
+        "core_metrics": ["net_income", "operating_cash_flow", "free_cash_flow"],
+        "supporting_metrics": [
+            "stock_based_compensation",
+            "depreciation_and_amortization",
+            "accounts_receivable",
+            "inventory",
+            "accounts_payable",
+            "deferred_revenue",
+        ],
+    },
+    {
+        "question_id": "capital_consumption",
+        "question": "增长需要消耗多少资本？ / How much capital does growth consume?",
+        "core_metrics": ["capex", "operating_cash_flow", "free_cash_flow"],
+        "supporting_metrics": ["current_assets", "current_liabilities", "cash_paid_for_taxes"],
+    },
+    {
+        "question_id": "balance_sheet_risk",
+        "question": "资产负债表风险有多大？ / What balance-sheet risks are visible?",
+        "core_metrics": ["cash", "total_assets", "total_liabilities"],
+        "supporting_metrics": ["short_term_investments", "restricted_cash", "debt", "debt_current", "debt_noncurrent"],
+    },
+]
 
 CONTEXT_PATTERN = re.compile(
     r"<xbrli:context\b(?P<attrs>[^>]*)>(?P<body>.*?)</xbrli:context>",
@@ -207,22 +420,27 @@ def extract_financial_facts_from_documents(documents: list[dict[str, Any]]) -> d
     counts_by_metric = Counter(fact["metric"] for fact in selected_facts)
     counts_by_period = Counter(fact["period_type"] for fact in selected_facts)
     methods = sorted({fact.get("extraction_method") for fact in selected_facts if fact.get("extraction_method")})
+    coverage = _build_extraction_coverage(selected_facts)
+    review_flags = _build_extraction_review_flags(selected_facts, coverage)
     summary = {
         "raw_fact_count": len(raw_facts),
         "selected_fact_count": len(selected_facts),
         "counts_by_metric": dict(sorted(counts_by_metric.items())),
         "counts_by_period": dict(sorted(counts_by_period.items())),
+        "coverage": coverage,
+        "review_flags": review_flags,
         "extraction_errors": extraction_errors,
         "method": "official_document_table_extraction",
         "methods_used": methods,
         "notes": [
-            "Only mapped SEC XBRL tags are extracted.",
+            "Only mapped SEC XBRL tags and controlled official earnings-release table labels are extracted.",
             "Comparative values are deduplicated by metric, unit, and period, preferring the latest official filing.",
             "Gross profit and free cash flow may be derived only from official component tags.",
             "SEC helper pages and wrapper-only 6-K documents are skipped by the document corpus policy.",
             "Pretax income and stock-based compensation tags are kept to one accounting concept per metric.",
             "Tencent PDF extraction prefers audited statement tables over five-year summary tables for overlapping periods.",
             "Tencent interim PDF extraction is limited to the latest interim report until older PDF scale formats are mapped safely.",
+            "Financial extraction is source-gated to SEC/regulator filings and company investor-relations documents; third-party mirrors are rejected.",
             "No number is filled from memory or from non-official sources.",
         ],
     }
@@ -324,6 +542,135 @@ def verify_financial_facts(raw_facts: list[dict[str, Any]]) -> list[dict[str, An
     return results
 
 
+def _build_extraction_coverage(facts: list[dict[str, Any]]) -> dict[str, Any]:
+    present_metrics = sorted({str(fact.get("metric")) for fact in facts if fact.get("metric")})
+    return {
+        "present_metrics": present_metrics,
+        "priority_a": _coverage_group(CORE_PRIORITY_A_METRICS, present_metrics),
+        "priority_b": _coverage_group(CORE_PRIORITY_B_METRICS, present_metrics),
+        "question_coverage": [
+            _question_coverage(question, present_metrics) for question in FINANCIAL_QUESTION_COVERAGE
+        ],
+    }
+
+
+def _coverage_group(required_metrics: list[str], present_metrics: list[str]) -> dict[str, Any]:
+    present = set(present_metrics)
+    return {
+        "present": [metric for metric in required_metrics if metric in present],
+        "missing": [metric for metric in required_metrics if metric not in present],
+    }
+
+
+def _question_coverage(question: dict[str, Any], present_metrics: list[str]) -> dict[str, Any]:
+    present = set(present_metrics)
+    core_metrics = list(question["core_metrics"])
+    supporting_metrics = list(question["supporting_metrics"])
+    available_core = [metric for metric in core_metrics if metric in present]
+    missing_core = [metric for metric in core_metrics if metric not in present]
+    available_supporting = [metric for metric in supporting_metrics if metric in present]
+    missing_supporting = [metric for metric in supporting_metrics if metric not in present]
+    if not missing_core and available_supporting:
+        status = "supported"
+    elif not missing_core:
+        status = "basic_supported"
+    elif available_core:
+        status = "partial"
+    else:
+        status = "missing"
+    return {
+        "question_id": question["question_id"],
+        "question": question["question"],
+        "status": status,
+        "available_core_metrics": available_core,
+        "missing_core_metrics": missing_core,
+        "available_supporting_metrics": available_supporting,
+        "missing_supporting_metrics": missing_supporting,
+    }
+
+
+def _build_extraction_review_flags(
+    facts: list[dict[str, Any]],
+    coverage: dict[str, Any],
+) -> list[dict[str, Any]]:
+    present = {str(fact.get("metric")) for fact in facts if fact.get("metric")}
+    flags: list[dict[str, Any]] = []
+    if not facts:
+        return [
+            {
+                "flag_id": "no_official_financial_facts_extracted",
+                "severity": "high",
+                "message": "No mapped official financial facts were extracted from the eligible document set.",
+            }
+        ]
+
+    priority_a_missing = coverage.get("priority_a", {}).get("missing", [])
+    if priority_a_missing:
+        flags.append(
+            {
+                "flag_id": "priority_a_metric_gap",
+                "severity": "medium",
+                "missing_metrics": priority_a_missing,
+                "message": "Some core financial-statement facts are still missing from mapped extraction.",
+            }
+        )
+
+    if {"cash", "total_assets", "total_liabilities"} & present and not ({"debt", "debt_current", "debt_noncurrent"} & present):
+        flags.append(
+            {
+                "flag_id": "interest_bearing_debt_not_explicitly_extracted",
+                "severity": "info",
+                "message": "No explicit interest-bearing debt fact was extracted. The extractor does not assume debt is zero.",
+            }
+        )
+
+    working_capital_metrics = {
+        "accounts_receivable",
+        "inventory",
+        "accounts_payable",
+        "accounts_payable_and_accrued_expenses",
+        "accrued_expenses",
+        "deferred_revenue",
+    }
+    if "operating_cash_flow" in present and not (working_capital_metrics & present):
+        flags.append(
+            {
+                "flag_id": "working_capital_detail_gap",
+                "severity": "medium",
+                "message": "Operating cash flow was extracted, but working-capital detail was not. Cash-conversion analysis should remain cautious.",
+            }
+        )
+
+    revenue_breakdown_metrics = {
+        "online_marketing_services_revenue",
+        "transaction_services_revenue",
+    }
+    if "revenue" in present and not (revenue_breakdown_metrics & present):
+        flags.append(
+            {
+                "flag_id": "revenue_breakdown_gap",
+                "severity": "info",
+                "message": "Revenue was extracted, but no controlled revenue breakdown fact was found in the mapped tags/tables.",
+            }
+        )
+
+    has_earnings_release_table = any(
+        str(fact.get("extraction_method") or "").startswith("official_earnings_release")
+        for fact in facts
+    )
+    has_non_gaap_bridge = any(str(fact.get("metric") or "").startswith("non_gaap_") for fact in facts)
+    if has_earnings_release_table and not has_non_gaap_bridge:
+        flags.append(
+            {
+                "flag_id": "non_gaap_bridge_not_extracted",
+                "severity": "info",
+                "message": "Official earnings-release facts were extracted, but no non-GAAP bridge rows were found by the controlled parser.",
+            }
+        )
+
+    return flags
+
+
 def _extract_document_facts(path: Path, document: dict[str, Any]) -> list[dict[str, Any]]:
     text = path.read_text(encoding="utf-8", errors="ignore")
     contexts = _parse_contexts(text)
@@ -347,9 +694,9 @@ def _extract_document_facts(path: Path, document: dict[str, Any]) -> list[dict[s
         if value is None:
             continue
         adjustment_note = None
-        if metric == "diluted_shares" and value and value < 100_000_000:
+        if metric in {"basic_shares", "diluted_shares"} and value and value < 100_000_000:
             value *= 1000
-            adjustment_note = "Applied PDD share-count scale normalization: values below 100 million are treated as thousands."
+            adjustment_note = "Applied share-count scale normalization: values below 100 million are treated as thousands."
         period = _period_fields(context)
         fact_id = (
             f"{document.get('document_id')}:{metric}:"

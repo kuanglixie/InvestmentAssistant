@@ -1,8 +1,11 @@
 __pycache__/
 *.py[cod]
+.DS_Store
 .pytest_cache/
 .venv/
 .env
+data/.DS_Store
+data/automation/
 data/raw/
 data/runs/
 data/test-runs/

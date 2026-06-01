@@ -42,6 +42,8 @@ LangGraph is the right fit because the system needs:
 - Agent-by-agent audit trails.
 - Future support for long-running monitoring jobs.
 
+Human review points should be treated as explicit workflow gates, not informal chat pauses. The living decision-point registry is `docs/human-involved-decision-points.md`.
+
 Use LangChain for:
 
 - OpenAI model integration.
@@ -350,33 +352,14 @@ V1 placeholder:
 
 The metrics agent should wait for the user's metrics document before finalizing the first formula set.
 
-Expected design:
+Current design:
 
-- Store formulas in versioned YAML files.
-- Keep formula explanations near the formula definitions.
-- Run calculations deterministically in Python.
+- Keep formula implementation in deterministic Python as the single source of truth.
+- Keep formula explanations in docs near the agent instructions.
+- Do not keep a parallel formula JSON/YAML config unless runtime code actually reads it.
 - Use LLM only to explain interpretation and limitations.
 
-Suggested formula file:
-
-```text
-config/formulas/v1.yaml
-```
-
-Formula record:
-
-```yaml
-id: fcf_margin
-name: Free Cash Flow Margin
-version: 1
-formula: free_cash_flow / revenue
-inputs:
-  - free_cash_flow
-  - revenue
-interpretation_prompt: >
-  Explain what this margin suggests about business quality, while noting
-  why high or low values may mean different things by industry.
-```
+The previous idea of a separate formula YAML/JSON registry was removed because it created a second source of truth.
 
 ### 6.7 Report Builder Agent
 
@@ -711,7 +694,7 @@ Fixture strategy:
 ### Phase 5: Metrics
 
 - Ingest user-provided metrics document.
-- Convert first formulas into versioned config.
+- Implement first formulas directly in deterministic Python.
 - Add deterministic metric calculations.
 - Add interpretation layer.
 
@@ -719,7 +702,7 @@ Initial metric requirements are captured in:
 
 - `docs/metrics-formula-requirements-v1.md`
 
-The first formula config should prioritize Owner Earnings, Enterprise Value, True Yield, Cash Conversion Ratio, Five-Year One-Dollar Test, and Unlevered ROIC.
+The first formula implementation should prioritize Owner Earnings, Enterprise Value, True Yield, Cash Conversion Ratio, Five-Year One-Dollar Test, and Unlevered ROIC.
 
 Confirmed V1 metric behavior:
 

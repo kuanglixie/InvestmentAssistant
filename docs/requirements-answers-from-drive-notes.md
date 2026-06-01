@@ -1,5 +1,8 @@
 # Requirements Answers Extracted From Google Drive Notes
 
+> Status: Archived historical planning note.
+> This document is retained for context, but it should not be used as the primary design source. Current active references are `docs/financial-results-report-methodology-v1.md`, `docs/metrics-formula-requirements-v1.md`, `docs/human-involved-decision-points.md`, `docs/technical-architecture-v1.md`, and `docs/agent-improvement-backlog.md`.
+
 ## 1. Source Folder
 
 User-provided Google Drive folder:
@@ -217,8 +220,8 @@ The notes make clear that formulas are judgment-heavy, especially ROIC.
 
 V1 should therefore:
 
-- Store formulas in versioned config.
-- Store interpretation notes with formulas.
+- Store formulas in deterministic Python as the single source of truth.
+- Store interpretation notes in docs near the agent instructions.
 - Separate deterministic calculation from interpretation.
 - Require human approval before changing formulas.
 - Record controversial adjustments explicitly.

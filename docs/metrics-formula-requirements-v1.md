@@ -1,5 +1,43 @@
 # Metrics And Formula Requirements V1
 
+> Status: Formula appendix / historical requirement note.
+> The active Financial Agents design lives in `docs/financial-agents-v1.md`.
+> Price-dependent valuation formulas now live in `docs/valuation-methodology-v1.md`.
+> Business-quality classification belongs to `docs/business-model-moat-agent-v1.md`.
+> If this file conflicts with those active documents, the active documents win.
+
+## 0. Current Ownership Override
+
+Financial Metrics Agent owns pure financial-statement quality metrics:
+
+- owner earnings proxy amount,
+- cash conversion with working-capital review,
+- margins,
+- capital intensity,
+- SBC and dilution burden,
+- balance-sheet risk,
+- ROIC and incremental ROIC proxy.
+
+Valuation Agent owns market-price-dependent metrics:
+
+- enterprise value,
+- owner earnings yield / true yield,
+- FCF yield,
+- investment-adjusted operating yield,
+- one-dollar test,
+- DCF / scenario valuation,
+- margin of safety,
+- estimated return.
+
+Business Model / Moat Agent owns business-quality classification:
+
+- great business,
+- good business,
+- gruesome business,
+- pricing power and durability interpretation.
+
+V1 should not automatically introduce highly judgmental adjustments such as R&D capitalization, goodwill-adjusted ROIC, normalized tax, excess cash, or investment-portfolio haircuts unless they are explicitly reviewed.
+
 ## 1. Source Document
 
 Primary user-provided metrics document:
@@ -96,6 +134,11 @@ V1 treatment:
 Purpose:
 
 Convert owner earnings into an owner-oriented earnings yield that can be compared with alternatives such as long-term government bonds.
+
+Agent ownership:
+
+- `Owner Earnings` is a Financial Metrics Agent output.
+- `Enterprise Value` and `True Yield` are Valuation Agent outputs because they depend on market price, FX, and market-cap assumptions.
 
 Candidate formula:
 
@@ -452,6 +495,11 @@ Example formula ID candidates:
 - `one_dollar_test_5y_v1`
 - `unlevered_roic_v1`
 - `intrinsic_value_dcf_v1`
+
+Ownership note:
+
+- Financial Metrics Agent should own pure financial-statement quality metrics.
+- Valuation Agent should own market-price-dependent metrics and estimated-return logic.
 
 ## 9. Remaining Formula Questions
 

@@ -8,13 +8,33 @@ from typing import Any
 
 from stock_research.env import load_dotenv
 from stock_research.alternative_data import collect_alternative_data_signals
+from stock_research.diagnostics import run_v1_financial_diagnostics
+from stock_research.extraction.xbrl import extract_financial_facts_from_documents
 from stock_research.graph import build_graph
 from stock_research.learning.lessons import build_lesson_report, load_lesson_registry
-from stock_research.metrics.v1 import calculate_v1_metrics
+from stock_research.material_events import scan_material_events
+from stock_research.management_communication import build_management_communication_pack
+from stock_research.metrics.v1 import calculate_v1_financial_metrics, calculate_v1_valuation_metrics
 from stock_research.monitoring.watchlist import run_watchlist_monitor
-from stock_research.reports.markdown import build_financial_results_report
+from stock_research.official_evidence import (
+    build_official_report_evidence_pack,
+    build_official_report_evidence_report,
+)
+from stock_research.report_pack import build_financial_report_pack
+from stock_research.reports.financial_interpretation import build_financial_easy_reading_report
+from stock_research.reports.markdown import build_final_report, build_financial_results_report
 from stock_research.state import make_initial_state
-from stock_research.storage import ensure_run_layout, save_state, write_financial_results_report
+from stock_research.storage import (
+    ensure_run_layout,
+    save_state,
+    write_financial_easy_reading_report,
+    write_financial_report_pack,
+    write_financial_results_report,
+    write_final_report,
+    write_management_communication_pack,
+    write_official_report_evidence_pack,
+    write_official_report_evidence_report,
+)
 
 
 def make_run_id(company: str) -> str:
@@ -50,7 +70,11 @@ def run_research(
         "run_dir": final_state["run_dir"],
         "final_report_path": final_state.get("final_report_path"),
         "financial_results_report_path": final_state.get("financial_results_report_path"),
+        "financial_easy_reading_report_path": final_state.get("financial_easy_reading_report_path"),
+        "official_report_evidence_report_path": final_state.get("official_report_evidence_report_path"),
         "business_model_report_path": final_state.get("business_model_report_path"),
+        "right_people_report_path": final_state.get("right_people_report_path"),
+        "right_people_chinese_report_path": final_state.get("right_people_chinese_report_path"),
         "data_linkage_report_path": final_state.get("data_linkage_report_path"),
         "graph_backend": final_state.get("graph_backend"),
     }
@@ -75,18 +99,55 @@ def rerun_financial_report(run_id: str, runs_dir: str | Path = "data/runs") -> d
     if not state_path.exists():
         raise FileNotFoundError(f"Run state not found: {state_path}")
     state = json.loads(state_path.read_text(encoding="utf-8"))
-    state["metrics"] = calculate_v1_metrics(
+    if state.get("documents"):
+        extraction = extract_financial_facts_from_documents(state.get("documents", []))
+        state["raw_extracted_facts"] = extraction["raw_facts"]
+        state["extracted_facts"] = extraction["selected_facts"]
+        state["extraction_summary"] = extraction["summary"]
+    state["metrics"] = calculate_v1_financial_metrics(state.get("extracted_facts", []))
+    state["diagnostic_findings"] = run_v1_financial_diagnostics(
+        extracted_facts=state.get("extracted_facts", []),
+        metrics=state.get("metrics", []),
+    )
+    state["material_event_scan"] = scan_material_events(state.get("documents", []))
+    state["valuation_metrics"] = calculate_v1_valuation_metrics(
         state.get("extracted_facts", []),
         market_inputs=state.get("market_inputs", {}),
+        financial_metrics=state.get("metrics", []),
     )
+    state["financial_report_pack"] = build_financial_report_pack(state)
+    write_financial_report_pack(state)
+    state["official_report_evidence_pack"] = build_official_report_evidence_pack(state)
+    write_official_report_evidence_pack(state)
+    evidence_report = build_official_report_evidence_report(state.get("official_report_evidence_pack", {}))
+    write_official_report_evidence_report(state, evidence_report)
+    state["management_communication_pack"] = build_management_communication_pack(state)
+    write_management_communication_pack(state)
     report = build_financial_results_report(state, audit_status="Draft pending audit review")
     write_financial_results_report(state, report)
+    easy_report = build_financial_easy_reading_report(
+        state.get("financial_report_pack", {}),
+        audit_status="Draft pending audit review",
+        official_evidence_pack=state.get("official_report_evidence_pack", {}),
+        management_communication_pack=state.get("management_communication_pack", {}),
+    )
+    write_financial_easy_reading_report(state, easy_report)
+    final_report = build_final_report(state, audit_status="Draft pending audit review")
+    write_final_report(state, final_report)
     save_state(state)
     return {
         "run_id": state["run_id"],
         "run_dir": state["run_dir"],
+        "final_report_path": state.get("final_report_path"),
         "financial_results_report_path": state["financial_results_report_path"],
+        "financial_easy_reading_report_path": state.get("financial_easy_reading_report_path"),
+        "official_report_evidence_pack_path": state.get("official_report_evidence_pack_path"),
+        "official_report_evidence_report_path": state.get("official_report_evidence_report_path"),
+        "management_communication_pack_path": state.get("management_communication_pack_path"),
         "metric_families": len(state.get("metrics", [])),
+        "diagnostic_status": (state.get("diagnostic_findings") or {}).get("status"),
+        "material_event_status": (state.get("material_event_scan") or {}).get("status"),
+        "financial_report_pack_path": state.get("financial_report_pack_path"),
     }
 
 

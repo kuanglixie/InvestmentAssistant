@@ -64,11 +64,76 @@ def write_financial_results_report(state: ResearchState, content: str) -> Resear
     return state
 
 
+def write_financial_easy_reading_report(state: ResearchState, content: str) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "financial_easy_reading_report.md"
+    report_path.write_text(content.strip() + "\n", encoding="utf-8")
+    state["financial_easy_reading_report_path"] = str(report_path)
+    return state
+
+
+def write_financial_report_pack(state: ResearchState) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "financial_report_pack.json"
+    report_path.write_text(
+        json.dumps(state.get("financial_report_pack") or {}, indent=2, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    state["financial_report_pack_path"] = str(report_path)
+    return state
+
+
+def write_official_report_evidence_pack(state: ResearchState) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "official_report_evidence_pack.json"
+    report_path.write_text(
+        json.dumps(state.get("official_report_evidence_pack") or {}, indent=2, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    state["official_report_evidence_pack_path"] = str(report_path)
+    return state
+
+
+def write_official_report_evidence_report(state: ResearchState, content: str) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "official_report_evidence_report.md"
+    report_path.write_text(content.strip() + "\n", encoding="utf-8")
+    state["official_report_evidence_report_path"] = str(report_path)
+    return state
+
+
+def write_management_communication_pack(state: ResearchState) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "management_communication_pack.json"
+    report_path.write_text(
+        json.dumps(state.get("management_communication_pack") or {}, indent=2, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    state["management_communication_pack_path"] = str(report_path)
+    return state
+
+
 def write_business_model_report(state: ResearchState, content: str) -> ResearchState:
     run_dir = ensure_run_layout(state["run_dir"])
     report_path = run_dir / "business_model_report.md"
     report_path.write_text(content.strip() + "\n", encoding="utf-8")
     state["business_model_report_path"] = str(report_path)
+    return state
+
+
+def write_right_people_report(state: ResearchState, content: str) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "right_people_report.md"
+    report_path.write_text(content.strip() + "\n", encoding="utf-8")
+    state["right_people_report_path"] = str(report_path)
+    return state
+
+
+def write_right_people_chinese_report(state: ResearchState, content: str) -> ResearchState:
+    run_dir = ensure_run_layout(state["run_dir"])
+    report_path = run_dir / "right_people_report.zh.md"
+    report_path.write_text(content.strip() + "\n", encoding="utf-8")
+    state["right_people_chinese_report_path"] = str(report_path)
     return state
 
 

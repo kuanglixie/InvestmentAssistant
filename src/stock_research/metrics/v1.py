@@ -6,51 +6,111 @@ from typing import Any
 from stock_research.valuation.market_inputs import market_cap_in_cny
 
 
+REVENUE_COMPONENT_METRICS = [
+    "online_marketing_services_revenue",
+    "transaction_services_revenue",
+    "product_revenue",
+    "service_revenue",
+    "subscription_revenue",
+    "advertising_revenue",
+    "marketplace_services_revenue",
+]
+
+REVENUE_COMPONENT_EXCLUDE = {
+    "cost_of_revenue",
+    "deferred_revenue",
+    "change_in_deferred_revenue",
+}
+
+WORKING_CAPITAL_COMPONENTS = [
+    ("accounts_receivable", "cash_use_asset"),
+    ("inventory", "cash_use_asset"),
+    ("accounts_payable", "cash_source_liability"),
+    ("accounts_payable_and_accrued_expenses", "cash_source_liability"),
+    ("payable_to_merchants", "cash_source_liability"),
+    ("merchant_deposits", "cash_source_liability"),
+    ("deferred_revenue", "cash_source_liability"),
+    ("accrued_expenses", "cash_source_liability"),
+]
+
+NON_GAAP_ADJUSTMENT_METRICS = [
+    "non_gaap_adjustment_share_based_compensation",
+    "non_gaap_adjustment_fair_value_changes",
+    "non_gaap_adjustment_amortization",
+    "non_gaap_adjustment_tax_effect",
+]
+
+
 def calculate_v1_metrics(
     extracted_facts: list[dict[str, Any]],
     *,
     market_inputs: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
+    financial_metrics = calculate_v1_financial_metrics(extracted_facts)
+    valuation_metrics = calculate_v1_valuation_metrics(
+        extracted_facts,
+        market_inputs=market_inputs,
+        financial_metrics=financial_metrics,
+    )
+    return financial_metrics + valuation_metrics
+
+
+def calculate_v1_financial_metrics(extracted_facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     annual = _annual_cny_fact_map(extracted_facts)
+    quarterly = _quarterly_fact_map(extracted_facts)
     owner_earnings = _owner_earnings(annual)
-    enterprise_value = _enterprise_value(annual, market_inputs or {})
     margin_profile = _margin_profile(annual)
     incremental_margin = _incremental_margin(annual)
     capital_intensity = _capital_intensity(annual)
     balance_sheet_risk = _balance_sheet_risk(annual)
     sbc_burden = _share_based_compensation_burden(annual)
     cash_conversion = _cash_conversion(annual)
+    working_capital_quality = _working_capital_quality(annual)
+    tax_non_gaap_accounting_quality = _tax_non_gaap_accounting_quality(annual, quarterly)
+    source_of_growth = _source_of_growth_attribution(annual, quarterly)
+    latest_interim_trend = _latest_interim_trend(annual, quarterly)
     roic = _unlevered_roic(annual)
     incremental_roic = _incremental_roic_proxy(annual)
-    financial_quality = _financial_quality_questions(
-        annual,
-        margin_profile=margin_profile,
-        incremental_margin=incremental_margin,
-        capital_intensity=capital_intensity,
-        balance_sheet_risk=balance_sheet_risk,
-        sbc_burden=sbc_burden,
-        cash_conversion=cash_conversion,
-        owner_earnings=owner_earnings,
-        roic=roic,
-        incremental_roic=incremental_roic,
-    )
     metrics = [
-        financial_quality,
         margin_profile,
         incremental_margin,
+        source_of_growth,
         capital_intensity,
+        working_capital_quality,
+        tax_non_gaap_accounting_quality,
+        latest_interim_trend,
         balance_sheet_risk,
         sbc_burden,
         owner_earnings,
-        enterprise_value,
-        _true_yield(owner_earnings, enterprise_value),
-        _free_cash_flow_yield(annual, enterprise_value),
         cash_conversion,
-        _one_dollar_test(),
         roic,
         incremental_roic,
     ]
     return metrics
+
+
+def calculate_v1_valuation_metrics(
+    extracted_facts: list[dict[str, Any]],
+    *,
+    market_inputs: dict[str, Any] | None = None,
+    financial_metrics: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    annual = _annual_cny_fact_map(extracted_facts)
+    owner_earnings = _metric_by_id(financial_metrics or [], "owner_earnings_v1") or _owner_earnings(
+        annual
+    )
+    enterprise_value = _enterprise_value(annual, market_inputs or {})
+    return [
+        enterprise_value,
+        _true_yield(owner_earnings, enterprise_value),
+        _free_cash_flow_yield(annual, enterprise_value),
+        _investment_adjusted_operating_yield(
+            annual,
+            owner_earnings,
+            enterprise_value,
+        ),
+        _one_dollar_test(),
+    ]
 
 
 def annual_fact_rows(extracted_facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -69,9 +129,16 @@ def annual_fact_rows(extracted_facts: list[dict[str, Any]]) -> list[dict[str, An
                 "capex": _value(by_metric, "capex"),
                 "free_cash_flow": _value(by_metric, "free_cash_flow"),
                 "cash": _value(by_metric, "cash"),
+                "restricted_cash": _value(by_metric, "restricted_cash"),
+                "short_term_investments": _value(by_metric, "short_term_investments"),
                 "debt": _value(by_metric, "debt"),
+                "debt_current": _value(by_metric, "debt_current"),
+                "debt_noncurrent": _value(by_metric, "debt_noncurrent"),
+                "investment_portfolio": _value(by_metric, "investment_portfolio"),
                 "stock_based_compensation": _value(by_metric, "stock_based_compensation"),
                 "diluted_shares": _value(by_metric, "diluted_shares"),
+                "current_assets": _value(by_metric, "current_assets"),
+                "current_liabilities": _value(by_metric, "current_liabilities"),
                 "total_assets": _value(by_metric, "total_assets"),
                 "total_liabilities": _value(by_metric, "total_liabilities"),
             }
@@ -94,6 +161,12 @@ def quarterly_fact_rows(extracted_facts: list[dict[str, Any]]) -> list[dict[str,
                 "net_income": _value(by_metric, "net_income"),
                 "operating_cash_flow": _value(by_metric, "operating_cash_flow"),
                 "cash": _value(by_metric, "cash"),
+                "short_term_investments": _value(by_metric, "short_term_investments"),
+                "restricted_cash": _value(by_metric, "restricted_cash"),
+                "current_assets": _value(by_metric, "current_assets"),
+                "current_liabilities": _value(by_metric, "current_liabilities"),
+                "total_assets": _value(by_metric, "total_assets"),
+                "total_liabilities": _value(by_metric, "total_liabilities"),
                 "diluted_shares": _value(by_metric, "diluted_shares"),
             }
         )
@@ -111,6 +184,7 @@ def annual_fact_source_rows(extracted_facts: list[dict[str, Any]]) -> list[dict[
         "capex",
         "free_cash_flow",
         "cash",
+        "investment_portfolio",
         "total_assets",
         "total_liabilities",
         "diluted_shares",
@@ -180,7 +254,19 @@ def _quarterly_fact_map(extracted_facts: list[dict[str, Any]]) -> dict[str, dict
     for fact in extracted_facts:
         unit = fact.get("unit")
         metric = fact.get("metric")
-        if unit not in {"CNY", "shares"} or metric not in {"cash", "total_assets", "total_liabilities"}:
+        if unit not in {"CNY", "shares"} or metric not in {
+            "cash",
+            "cash_and_short_term_investments",
+            "short_term_investments",
+            "restricted_cash",
+            "current_assets",
+            "total_assets",
+            "current_liabilities",
+            "total_liabilities",
+            "debt",
+            "debt_current",
+            "debt_noncurrent",
+        }:
             continue
         end_date = fact.get("end_date") or fact.get("instant")
         if not isinstance(end_date, str) or end_date not in by_period:
@@ -191,6 +277,13 @@ def _quarterly_fact_map(extracted_facts: list[dict[str, Any]]) -> dict[str, dict
         if current is None or _fact_preference_key(fact) >= _fact_preference_key(current):
             by_period[end_date][metric] = fact
     return dict(by_period)
+
+
+def _metric_by_id(metrics: list[dict[str, Any]], formula_id: str) -> dict[str, Any] | None:
+    for metric in metrics:
+        if metric.get("formula_id") == formula_id:
+            return metric
+    return None
 
 
 def _owner_earnings(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, Any]:
@@ -212,8 +305,15 @@ def _owner_earnings(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, A
                 "status": "calculated",
                 "value": value,
                 "unit": "CNY",
-                "formula": "operating_cash_flow - stock_based_compensation - depreciation_and_amortization",
+                "display_name": "owner earnings proxy",
+                "formula": "operating_cash_flow - stock_based_compensation - maintenance_capex_proxy",
+                "maintenance_capex_proxy": facts["depreciation_and_amortization"]["value"],
                 "assumption": "V1 uses D&A as the maintenance CapEx approximation.",
+                "review_required": True,
+                "limitations": [
+                    "This is an owner-earnings proxy, not a precise Buffett owner-earnings calculation.",
+                    "Maintenance CapEx is not separately estimated from growth CapEx in V1.",
+                ],
                 "source_fact_ids": [facts[metric]["fact_id"] for metric in required],
             }
         )
@@ -318,12 +418,18 @@ def _true_yield(owner_earnings: dict[str, Any], enterprise_value: dict[str, Any]
                 "status": "calculated",
                 "value": owner_result["value"] / ev_result["value"],
                 "unit": "ratio",
+                "display_name": "owner earnings proxy yield on enterprise value",
                 "formula": "owner_earnings / enterprise_value",
                 "owner_earnings": owner_result["value"],
                 "enterprise_value": ev_result["value"],
                 "enterprise_value_year": ev_result.get("year"),
                 "as_of_date": ev_result.get("as_of_date"),
-                "review_required": ev_result.get("review_required", True),
+                "review_required": owner_result.get("review_required", True)
+                or ev_result.get("review_required", True),
+                "limitations": [
+                    "Uses owner_earnings_v1, which is a proxy because maintenance CapEx is not independently estimated.",
+                    "Uses enterprise_value_v1, which subtracts all cash rather than estimating excess operating cash.",
+                ],
                 "source_fact_ids": owner_result.get("source_fact_ids", [])
                 + ev_result.get("source_fact_ids", []),
             }
@@ -364,15 +470,97 @@ def _free_cash_flow_yield(
                 "status": "calculated",
                 "value": fcf_fact["value"] / ev_result["value"],
                 "unit": "ratio",
+                "display_name": "free cash flow yield on enterprise value",
                 "formula": "free_cash_flow / enterprise_value",
                 "free_cash_flow": fcf_fact["value"],
                 "enterprise_value": ev_result["value"],
                 "enterprise_value_year": ev_result.get("year"),
                 "as_of_date": ev_result.get("as_of_date"),
                 "review_required": ev_result.get("review_required", True),
+                "limitations": [
+                    "Uses the V1 free-cash-flow definition from official operating cash flow and CapEx facts.",
+                    "FCF definitions can vary across companies and non-GAAP presentations.",
+                ],
                 "source_fact_ids": [fcf_fact["fact_id"]] + ev_result.get("source_fact_ids", []),
             }
         ],
+    }
+
+
+def _investment_adjusted_operating_yield(
+    annual: dict[int, dict[str, dict[str, Any]]],
+    owner_earnings: dict[str, Any],
+    enterprise_value: dict[str, Any],
+) -> dict[str, Any]:
+    owner_result = _latest_calculated_result(owner_earnings)
+    if owner_result is None:
+        return {
+            "formula_id": "investment_adjusted_operating_yield_v1",
+            "status": "missing_owner_earnings",
+            "note": "Requires calculated owner earnings.",
+        }
+    ev_result = _latest_calculated_result(enterprise_value)
+    if ev_result is None:
+        return {
+            "formula_id": "investment_adjusted_operating_yield_v1",
+            "status": "pending_enterprise_value",
+            "note": "Requires enterprise value.",
+        }
+    latest_portfolio = _latest_fact(annual, "investment_portfolio")
+    if latest_portfolio is None:
+        return {
+            "formula_id": "investment_adjusted_operating_yield_v1",
+            "status": "missing_investment_portfolio",
+            "note": "Requires official investment portfolio carrying amount. This is mainly needed for investment-heavy companies such as Tencent.",
+        }
+    latest_fcf = _latest_fact(annual, "free_cash_flow")
+    year, portfolio_fact = latest_portfolio
+    operating_enterprise_value = ev_result["value"] - portfolio_fact["value"]
+    if operating_enterprise_value <= 0:
+        return {
+            "formula_id": "investment_adjusted_operating_yield_v1",
+            "status": "not_calculable_nonpositive_operating_enterprise_value",
+            "enterprise_value": ev_result["value"],
+            "investment_portfolio": portfolio_fact["value"],
+        }
+    fcf_fact = latest_fcf[1] if latest_fcf else None
+    source_fact_ids = (
+        owner_result.get("source_fact_ids", [])
+        + ev_result.get("source_fact_ids", [])
+        + [portfolio_fact["fact_id"]]
+    )
+    if fcf_fact:
+        source_fact_ids.append(fcf_fact["fact_id"])
+    return {
+        "formula_id": "investment_adjusted_operating_yield_v1",
+        "status": "calculated",
+        "annual_results": [
+            {
+                "year": owner_result["year"],
+                "status": "calculated",
+                "value": owner_result["value"] / operating_enterprise_value,
+                "unit": "ratio",
+                "formula": "owner_earnings / (enterprise_value - official_investment_portfolio_carrying_value)",
+                "owner_earnings_yield": owner_result["value"] / operating_enterprise_value,
+                "free_cash_flow_yield": _safe_div(fcf_fact["value"], operating_enterprise_value) if fcf_fact else None,
+                "owner_earnings": owner_result["value"],
+                "free_cash_flow": fcf_fact["value"] if fcf_fact else None,
+                "enterprise_value": ev_result["value"],
+                "investment_portfolio": portfolio_fact["value"],
+                "operating_enterprise_value": operating_enterprise_value,
+                "investment_portfolio_year": year,
+                "enterprise_value_year": ev_result.get("year"),
+                "as_of_date": ev_result.get("as_of_date"),
+                "review_required": ev_result.get("review_required", True),
+                "source_fact_ids": source_fact_ids,
+                "limitations": [
+                    "Uses Tencent's official investment-portfolio carrying amount, not an independent market-value sum-of-the-parts.",
+                    "No tax haircut, liquidity haircut, control premium, or trapped-cash adjustment is applied in V1.",
+                    "Assumes owner earnings and FCF primarily represent consolidated operating cash generation rather than look-through investee cash earnings.",
+                ],
+            }
+        ],
+        "note": "Tencent-specific operating yield approximation: subtracts official investment portfolio carrying value from EV before calculating cash earnings yield.",
     }
 
 
@@ -394,6 +582,7 @@ def _cash_conversion(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, 
                 "status": "calculated",
                 "value": facts["operating_cash_flow"]["value"] / net_income,
                 "unit": "ratio",
+                "display_name": "CFO / net income",
                 "formula": "operating_cash_flow / net_income",
                 "source_fact_ids": [facts[metric]["fact_id"] for metric in required],
             }
@@ -402,6 +591,215 @@ def _cash_conversion(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, 
         "formula_id": "cash_conversion_ratio_v1",
         "status": "calculated" if any(row.get("status") == "calculated" for row in results) else "missing_required_facts",
         "annual_results": results,
+    }
+
+
+def _working_capital_quality(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, Any]:
+    results = []
+    all_component_metrics = [metric for metric, _role in WORKING_CAPITAL_COMPONENTS]
+    for year, facts in sorted(annual.items()):
+        previous = annual.get(year - 1, {})
+        component_specs = _working_capital_component_specs(facts, previous)
+        component_metrics = [metric for metric, _role in component_specs]
+        missing_required = [metric for metric in ["revenue"] if metric not in facts]
+        available_components = [metric for metric in component_metrics if metric in facts]
+        if missing_required:
+            results.append(
+                {"year": year, "status": "missing_required_facts", "missing": missing_required}
+            )
+            continue
+        if not available_components and not {"current_assets", "current_liabilities"} <= facts.keys():
+            results.append(
+                {
+                    "year": year,
+                    "status": "missing_required_facts",
+                    "missing": all_component_metrics + ["current_assets", "current_liabilities"],
+                }
+            )
+            continue
+        revenue = facts["revenue"]["value"]
+        if revenue == 0:
+            results.append({"year": year, "status": "not_calculable_zero_revenue"})
+            continue
+
+        previous_revenue = _value(previous, "revenue")
+        revenue_growth = _growth_rate(revenue, previous_revenue)
+        component_details = []
+        source_delta = 0.0
+        use_delta = 0.0
+        has_delta = False
+        for metric, role in component_specs:
+            current_value = _value(facts, metric)
+            if current_value is None:
+                continue
+            prior_value = _value(previous, metric)
+            yoy_growth = _growth_rate(current_value, prior_value)
+            delta = current_value - prior_value if prior_value is not None else None
+            if delta is not None:
+                has_delta = True
+                if role == "cash_source_liability":
+                    source_delta += delta
+                else:
+                    use_delta += delta
+            component_details.append(
+                _compact_values(
+                    {
+                        "metric": metric,
+                        "role": role,
+                        "value": current_value,
+                        "to_revenue": _safe_div(current_value, revenue),
+                        "yoy_growth": yoy_growth,
+                        "growth_minus_revenue_growth": yoy_growth - revenue_growth
+                        if yoy_growth is not None and revenue_growth is not None
+                        else None,
+                        "delta": delta,
+                    }
+                )
+            )
+
+        current_assets = _value(facts, "current_assets")
+        current_liabilities = _value(facts, "current_liabilities")
+        net_working_capital = (
+            current_assets - current_liabilities
+            if current_assets is not None and current_liabilities is not None
+            else None
+        )
+        working_capital_cash_tailwind = _safe_div(source_delta - use_delta, revenue) if has_delta else None
+        result = {
+            "year": year,
+            "status": "calculated",
+            "value": working_capital_cash_tailwind
+            if working_capital_cash_tailwind is not None
+            else _safe_div(net_working_capital, revenue),
+            "unit": "ratio",
+            "formula": "working-capital component deltas / revenue when prior-year components exist; otherwise net working capital / revenue",
+            "revenue_growth_yoy": revenue_growth,
+            "current_ratio": _safe_div(current_assets, current_liabilities),
+            "net_working_capital_to_revenue": _safe_div(net_working_capital, revenue),
+            "working_capital_cash_tailwind_to_revenue": working_capital_cash_tailwind,
+            "cash_source_liability_delta": source_delta if has_delta else None,
+            "cash_use_asset_delta": use_delta if has_delta else None,
+            "component_details": component_details,
+            "warning_flags": _working_capital_warnings(component_details, working_capital_cash_tailwind),
+            "missing_optional": [metric for metric in component_metrics if metric not in facts],
+            "source_fact_ids": [facts["revenue"]["fact_id"]]
+            + _source_fact_ids_for(facts, component_metrics + ["current_assets", "current_liabilities"])
+            + _source_fact_ids_for(previous, component_metrics + ["revenue"]),
+        }
+        results.append(result)
+    return {
+        "formula_id": "working_capital_quality_v1",
+        "status": "calculated" if any(row.get("status") == "calculated" for row in results) else "missing_required_facts",
+        "annual_results": results,
+        "note": "Checks whether cash conversion is supported by receivables, inventory, payables, merchant deposits, accrued expenses, deferred revenue, and current balance-sheet items.",
+    }
+
+
+def _tax_non_gaap_accounting_quality(
+    annual: dict[int, dict[str, dict[str, Any]]],
+    quarterly: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, Any]:
+    results = []
+    for year, facts in sorted(annual.items()):
+        pretax_metric = "pretax_income" if "pretax_income" in facts else "pretax_income_after_equity_method"
+        required = [pretax_metric, "tax_expense"]
+        missing = [metric for metric in required if metric not in facts]
+        if missing:
+            results.append({"year": year, "status": "missing_required_facts", "missing": missing})
+            continue
+        pretax_income = facts[pretax_metric]["value"]
+        if pretax_income == 0:
+            results.append({"year": year, "status": "not_calculable_zero_pretax_income"})
+            continue
+        tax_expense = facts["tax_expense"]["value"]
+        effective_tax_rate = tax_expense / pretax_income
+        cash_paid_for_taxes = _value(facts, "cash_paid_for_taxes")
+        investment_income = _value(facts, "investment_income")
+        equity_method_income = _value(facts, "equity_method_income")
+        impairment = _value(facts, "impairment")
+        revenue = _value(facts, "revenue")
+        result = {
+            "year": year,
+            "status": "calculated",
+            "value": effective_tax_rate,
+            "unit": "ratio",
+            "formula": "tax_expense / pretax_income",
+            "pretax_metric_used": pretax_metric,
+            "effective_tax_rate": effective_tax_rate,
+            "cash_tax_to_tax_expense": _safe_div(cash_paid_for_taxes, tax_expense),
+            "cash_tax_to_pretax_income": _safe_div(cash_paid_for_taxes, pretax_income),
+            "investment_income_to_pretax": _safe_div(investment_income, pretax_income),
+            "equity_method_income_to_pretax": _safe_div(equity_method_income, pretax_income),
+            "impairment_to_revenue": _safe_div(impairment, revenue),
+            "warning_flags": _tax_accounting_warnings(
+                effective_tax_rate=effective_tax_rate,
+                cash_tax_to_tax_expense=_safe_div(cash_paid_for_taxes, tax_expense),
+                investment_income_to_pretax=_safe_div(investment_income, pretax_income),
+                impairment_to_revenue=_safe_div(impairment, revenue),
+            ),
+            "missing_optional": [
+                metric
+                for metric in [
+                    "cash_paid_for_taxes",
+                    "investment_income",
+                    "equity_method_income",
+                    "impairment",
+                    "revenue",
+                ]
+                if metric not in facts
+            ],
+            "source_fact_ids": _source_fact_ids_for(
+                facts,
+                [
+                    pretax_metric,
+                    "tax_expense",
+                    "cash_paid_for_taxes",
+                    "investment_income",
+                    "equity_method_income",
+                    "impairment",
+                    "revenue",
+                ],
+            ),
+        }
+        results.append(result)
+
+    latest_non_gaap = _latest_non_gaap_bridge(quarterly)
+    status = "calculated" if any(row.get("status") == "calculated" for row in results) or latest_non_gaap else "missing_required_facts"
+    return {
+        "formula_id": "tax_non_gaap_accounting_quality_v1",
+        "status": status,
+        "annual_results": results,
+        "latest_interim_non_gaap": latest_non_gaap,
+        "note": "Combines annual tax/accounting checks with the latest official non-GAAP bridge when an earnings-release table is available.",
+    }
+
+
+def _source_of_growth_attribution(
+    annual: dict[int, dict[str, dict[str, Any]]],
+    quarterly: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, Any]:
+    annual_results = []
+    for year, facts in sorted(annual.items()):
+        annual_results.append(_source_of_growth_result(period=year, facts=facts, prior_facts=annual.get(year - 1, {})))
+
+    latest_quarter_result = None
+    if quarterly:
+        latest_period = sorted(quarterly)[-1]
+        prior_period = f"{int(latest_period[:4]) - 1}{latest_period[4:]}"
+        latest_quarter_result = _source_of_growth_result(
+            period=latest_period,
+            facts=quarterly[latest_period],
+            prior_facts=quarterly.get(prior_period, {}),
+        )
+
+    calculated_annual = [row for row in annual_results if row.get("status") == "calculated"]
+    status = "calculated" if calculated_annual or (latest_quarter_result and latest_quarter_result.get("status") == "calculated") else "missing_required_facts"
+    return {
+        "formula_id": "source_of_growth_attribution_v1",
+        "status": status,
+        "annual_results": annual_results,
+        "latest_interim_result": latest_quarter_result,
+        "note": "Uses official revenue component facts only. If segment/product/geography/take-rate facts are not extracted, the metric stays partial or missing instead of guessing.",
     }
 
 
@@ -543,6 +941,25 @@ def _balance_sheet_risk(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[st
         assets = facts["total_assets"]["value"]
         debt_fact = facts.get("debt")
         debt = debt_fact["value"] if debt_fact else None
+        restricted_cash_fact = facts.get("restricted_cash")
+        short_term_investments_fact = facts.get("short_term_investments")
+        current_assets_fact = facts.get("current_assets")
+        current_liabilities_fact = facts.get("current_liabilities")
+        debt_current_fact = facts.get("debt_current")
+        debt_noncurrent_fact = facts.get("debt_noncurrent")
+        debt_from_maturity = (
+            (debt_current_fact["value"] if debt_current_fact else 0)
+            + (debt_noncurrent_fact["value"] if debt_noncurrent_fact else 0)
+            if debt_current_fact or debt_noncurrent_fact
+            else None
+        )
+        debt_for_maturity = debt if debt is not None else debt_from_maturity
+        liquid_assets = cash + (short_term_investments_fact["value"] if short_term_investments_fact else 0)
+        convertible_facts = [
+            fact
+            for fact in (debt_fact, debt_current_fact, debt_noncurrent_fact)
+            if fact and "convertible" in str(fact.get("xbrl_tag") or fact.get("label") or "").lower()
+        ]
         result = {
             "year": year,
             "status": "calculated",
@@ -550,12 +967,62 @@ def _balance_sheet_risk(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[st
             "unit": "ratio",
             "formula": "total_liabilities / total_assets",
             "cash_to_total_liabilities": _safe_div(cash, liabilities),
+            "liquid_assets_to_total_liabilities": _safe_div(liquid_assets, liabilities),
             "liabilities_to_assets": _safe_div(liabilities, assets),
             "debt_to_cash": _safe_div(debt, cash) if debt is not None else None,
             "net_cash": cash - debt if debt is not None else None,
-            "missing_optional": [] if debt_fact else ["debt"],
+            "restricted_cash_to_cash": _safe_div(
+                restricted_cash_fact["value"] if restricted_cash_fact else None,
+                cash,
+            ),
+            "current_ratio": _safe_div(
+                current_assets_fact["value"] if current_assets_fact else None,
+                current_liabilities_fact["value"] if current_liabilities_fact else None,
+            ),
+            "current_debt_to_total_debt": _safe_div(
+                debt_current_fact["value"] if debt_current_fact else None,
+                debt_for_maturity,
+            ),
+            "noncurrent_debt_to_total_debt": _safe_div(
+                debt_noncurrent_fact["value"] if debt_noncurrent_fact else None,
+                debt_for_maturity,
+            ),
+            "debt_maturity_profile": _compact_values(
+                {
+                    "current_debt": debt_current_fact["value"] if debt_current_fact else None,
+                    "noncurrent_debt": debt_noncurrent_fact["value"] if debt_noncurrent_fact else None,
+                    "total_debt_for_maturity": debt_for_maturity,
+                }
+            ),
+            "convertible_terms_status": "structured_convertible_debt_detected_terms_not_parsed"
+            if convertible_facts
+            else "not_detected_in_structured_facts",
+            "missing_optional": [
+                metric
+                for metric, fact in {
+                    "debt": debt_fact,
+                    "restricted_cash": restricted_cash_fact,
+                    "short_term_investments": short_term_investments_fact,
+                    "current_assets": current_assets_fact,
+                    "current_liabilities": current_liabilities_fact,
+                    "debt_current": debt_current_fact,
+                    "debt_noncurrent": debt_noncurrent_fact,
+                }.items()
+                if fact is None
+            ],
             "source_fact_ids": [facts[metric]["fact_id"] for metric in required]
-            + ([debt_fact["fact_id"]] if debt_fact else []),
+            + _source_fact_ids_for(
+                facts,
+                [
+                    "debt",
+                    "restricted_cash",
+                    "short_term_investments",
+                    "current_assets",
+                    "current_liabilities",
+                    "debt_current",
+                    "debt_noncurrent",
+                ],
+            ),
         }
         results.append(result)
     return {
@@ -646,12 +1113,18 @@ def _unlevered_roic(annual: dict[int, dict[str, dict[str, Any]]]) -> dict[str, A
                 "status": "calculated",
                 "value": nopat / average_invested_capital,
                 "unit": "ratio",
+                "display_name": "unlevered ROIC proxy",
                 "formula": "NOPAT / average invested capital",
                 "tax_rate": nopat_result["tax_rate"],
                 "nopat": nopat,
                 "average_invested_capital": average_invested_capital,
                 "invested_capital_formula": "total_assets - total_liabilities + interest_bearing_debt - cash",
                 "used_zero_debt_assumption": invested_capital_by_year[year]["used_zero_debt_assumption"],
+                "review_required": invested_capital_by_year[year]["used_zero_debt_assumption"],
+                "limitations": [
+                    "Invested capital is a financing-side proxy: equity plus interest-bearing debt less cash.",
+                    "V1 subtracts all cash and does not separate excess cash, trapped cash, investments, leases, goodwill, or VIE-specific adjustments.",
+                ],
                 "source_fact_ids": [
                     *nopat_result["source_fact_ids"],
                     *invested_capital_by_year[year]["source_fact_ids"],
@@ -703,10 +1176,12 @@ def _incremental_roic_proxy(annual: dict[int, dict[str, dict[str, Any]]]) -> dic
                 "status": "calculated",
                 "value": delta_nopat / delta_invested_capital,
                 "unit": "ratio",
+                "display_name": "incremental ROIC proxy",
                 "formula": "change in NOPAT / change in invested capital",
                 "delta_nopat": delta_nopat,
                 "delta_invested_capital": delta_invested_capital,
                 "used_zero_debt_assumption": invested_capital_by_year[year]["used_zero_debt_assumption"],
+                "review_required": True,
                 "interpretation_limit": "Proxy only. It can be noisy when invested capital is small, negative, or cash-heavy.",
                 "source_fact_ids": [
                     *nopat_by_year[year]["source_fact_ids"],
@@ -724,194 +1199,79 @@ def _incremental_roic_proxy(annual: dict[int, dict[str, dict[str, Any]]]) -> dic
     }
 
 
-def _financial_quality_questions(
+def _latest_interim_trend(
     annual: dict[int, dict[str, dict[str, Any]]],
-    *,
-    margin_profile: dict[str, Any],
-    incremental_margin: dict[str, Any],
-    capital_intensity: dict[str, Any],
-    balance_sheet_risk: dict[str, Any],
-    sbc_burden: dict[str, Any],
-    cash_conversion: dict[str, Any],
-    owner_earnings: dict[str, Any],
-    roic: dict[str, Any],
-    incremental_roic: dict[str, Any],
+    quarterly: dict[str, dict[str, dict[str, Any]]],
 ) -> dict[str, Any]:
-    latest_margin = _latest_calculated_result(margin_profile)
-    latest_incremental_margin = _latest_calculated_result(incremental_margin)
-    latest_capital_intensity = _latest_calculated_result(capital_intensity)
-    latest_balance_sheet_risk = _latest_calculated_result(balance_sheet_risk)
-    latest_sbc_burden = _latest_calculated_result(sbc_burden)
-    latest_cash_conversion = _latest_calculated_result(cash_conversion)
-    latest_owner_earnings = _latest_calculated_result(owner_earnings)
-    latest_roic = _latest_calculated_result(roic)
-    latest_incremental_roic = _latest_calculated_result(incremental_roic)
+    if not annual or not quarterly:
+        return {
+            "formula_id": "latest_interim_trend_v1",
+            "status": "missing_required_facts",
+            "overall_status": "trend_unclear",
+            "missing": ["annual facts", "quarterly facts"],
+            "note": "Requires both an annual baseline and at least one official quarterly/interim period.",
+        }
 
-    questions = [
-        {
-            "rank": 1,
-            "question_id": "growth_quality",
-            "question": "收入增长来自哪里？增长质量好吗？",
-            "priority": "highest",
-            "status": "partial" if latest_margin else "missing",
-            "current_answer": _growth_quality_answer(latest_margin, latest_incremental_margin),
-            "metrics_used": [
-                "revenue_growth_yoy",
-                "gross_margin",
-                "operating_margin",
-                "incremental_operating_margin",
-                "incremental_free_cash_flow_margin",
-            ],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_margin.get("year") if latest_margin else None,
-                    "revenue_growth_yoy": latest_margin.get("revenue_growth_yoy") if latest_margin else None,
-                    "gross_margin": latest_margin.get("gross_margin") if latest_margin else None,
-                    "operating_margin": latest_margin.get("operating_margin") if latest_margin else None,
-                    "incremental_operating_margin": latest_incremental_margin.get("incremental_operating_margin")
-                    if latest_incremental_margin
-                    else None,
-                    "incremental_free_cash_flow_margin": latest_incremental_margin.get("incremental_free_cash_flow_margin")
-                    if latest_incremental_margin
-                    else None,
-                }
-            ),
-            "warning_flags": _growth_quality_warnings(latest_margin, latest_incremental_margin),
-            "missing": ["revenue attribution by platform/product/geography", "merchant cohort economics"],
-            "interpretation_limit": "The metrics agent can judge growth quality, but source-of-growth attribution belongs to financial extraction and business-model agents.",
-        },
-        {
-            "rank": 2,
-            "question_id": "profitability_with_scale",
-            "question": "规模变大以后利润率是上升还是下降？",
-            "priority": "highest",
-            "status": "answered" if latest_margin and latest_incremental_margin else "partial",
-            "current_answer": _profitability_with_scale_answer(latest_margin, latest_incremental_margin),
-            "metrics_used": ["gross_margin", "operating_margin", "net_margin", "incremental_margin"],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_margin.get("year") if latest_margin else None,
-                    "gross_margin": latest_margin.get("gross_margin") if latest_margin else None,
-                    "operating_margin": latest_margin.get("operating_margin") if latest_margin else None,
-                    "net_margin": latest_margin.get("net_margin") if latest_margin else None,
-                    "incremental_gross_margin": latest_incremental_margin.get("incremental_gross_margin")
-                    if latest_incremental_margin
-                    else None,
-                    "incremental_operating_margin": latest_incremental_margin.get("incremental_operating_margin")
-                    if latest_incremental_margin
-                    else None,
-                }
-            ),
-            "warning_flags": _margin_warnings(latest_margin, latest_incremental_margin),
-            "missing": [],
-            "interpretation_limit": "Margin trend does not prove moat; it only shows whether scale is currently flowing through to profits.",
-        },
-        {
-            "rank": 3,
-            "question_id": "cash_profit_quality",
-            "question": "这个公司赚的钱是真钱吗？现金流质量好不好？",
-            "priority": "highest",
-            "status": "answered" if latest_cash_conversion else "partial",
-            "current_answer": _cash_profit_quality_answer(latest_cash_conversion, latest_owner_earnings, latest_sbc_burden),
-            "metrics_used": [
-                "operating_cash_flow / net_income",
-                "free_cash_flow_margin",
-                "owner_earnings_v1",
-                "SBC / operating_cash_flow",
-            ],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_cash_conversion.get("year") if latest_cash_conversion else None,
-                    "cash_conversion": latest_cash_conversion.get("value") if latest_cash_conversion else None,
-                    "owner_earnings": latest_owner_earnings.get("value") if latest_owner_earnings else None,
-                    "sbc_to_operating_cash_flow": latest_sbc_burden.get("sbc_to_operating_cash_flow")
-                    if latest_sbc_burden
-                    else None,
-                }
-            ),
-            "warning_flags": _cash_profit_warnings(latest_cash_conversion, latest_sbc_burden),
-            "missing": ["receivables/payables/inventory/deferred-revenue working-capital bridge"],
-            "interpretation_limit": "V1 cash quality uses OCF, FCF, owner earnings, and SBC; a full working-capital bridge is a later extraction upgrade.",
-        },
-        {
-            "rank": 4,
-            "question_id": "capital_needed_for_growth",
-            "question": "增长需要消耗多少资本？资本效率有没有变差？",
-            "priority": "high",
-            "status": "answered" if latest_capital_intensity else "partial",
-            "current_answer": _capital_need_answer(latest_capital_intensity, latest_roic, latest_incremental_roic),
-            "metrics_used": ["capex / revenue", "capex / operating_cash_flow", "free_cash_flow_margin", "ROIC", "incremental ROIC proxy"],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_capital_intensity.get("year") if latest_capital_intensity else None,
-                    "capex_to_revenue": latest_capital_intensity.get("capex_to_revenue") if latest_capital_intensity else None,
-                    "capex_to_operating_cash_flow": latest_capital_intensity.get("capex_to_operating_cash_flow")
-                    if latest_capital_intensity
-                    else None,
-                    "free_cash_flow_margin": latest_capital_intensity.get("free_cash_flow_margin")
-                    if latest_capital_intensity
-                    else None,
-                    "roic": latest_roic.get("value") if latest_roic else None,
-                    "incremental_roic_proxy": latest_incremental_roic.get("value") if latest_incremental_roic else None,
-                }
-            ),
-            "warning_flags": _capital_need_warnings(latest_capital_intensity, latest_incremental_roic),
-            "missing": ["maintenance capex versus growth capex"],
-            "interpretation_limit": "V1 cannot yet separate maintenance and growth capex, so owner-earnings quality remains approximate.",
-        },
-        {
-            "rank": 5,
-            "question_id": "balance_sheet_resilience",
-            "question": "资产负债表风险大不大？公司能不能扛住坏年份？",
-            "priority": "high",
-            "status": "answered" if latest_balance_sheet_risk else "missing",
-            "current_answer": _balance_sheet_answer(latest_balance_sheet_risk),
-            "metrics_used": ["cash / total liabilities", "liabilities / assets", "debt / cash", "net cash"],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_balance_sheet_risk.get("year") if latest_balance_sheet_risk else None,
-                    "cash_to_total_liabilities": latest_balance_sheet_risk.get("cash_to_total_liabilities")
-                    if latest_balance_sheet_risk
-                    else None,
-                    "liabilities_to_assets": latest_balance_sheet_risk.get("liabilities_to_assets")
-                    if latest_balance_sheet_risk
-                    else None,
-                    "debt_to_cash": latest_balance_sheet_risk.get("debt_to_cash") if latest_balance_sheet_risk else None,
-                    "net_cash": latest_balance_sheet_risk.get("net_cash") if latest_balance_sheet_risk else None,
-                }
-            ),
-            "warning_flags": _balance_sheet_warnings(latest_balance_sheet_risk),
-            "missing": latest_balance_sheet_risk.get("missing_optional", []) if latest_balance_sheet_risk else ["cash", "assets", "liabilities"],
-            "interpretation_limit": "Balance-sheet ratios do not address trapped cash, VIE structure, or capital-control risk.",
-        },
-        {
-            "rank": 6,
-            "question_id": "sbc_and_per_share_quality",
-            "question": "增长有没有被股权激励和稀释吃掉？",
-            "priority": "medium",
-            "status": "partial" if latest_sbc_burden else "missing",
-            "current_answer": _sbc_answer(latest_sbc_burden),
-            "metrics_used": ["SBC / revenue", "SBC / operating cash flow", "diluted shares YoY"],
-            "latest_values": _compact_values(
-                {
-                    "year": latest_sbc_burden.get("year") if latest_sbc_burden else None,
-                    "sbc_to_revenue": latest_sbc_burden.get("sbc_to_revenue") if latest_sbc_burden else None,
-                    "sbc_to_operating_cash_flow": latest_sbc_burden.get("sbc_to_operating_cash_flow")
-                    if latest_sbc_burden
-                    else None,
-                    "diluted_shares_yoy": latest_sbc_burden.get("diluted_shares_yoy") if latest_sbc_burden else None,
-                }
-            ),
-            "warning_flags": _sbc_warnings(latest_sbc_burden),
-            "missing": ["buyback offset analysis", "full per-ADS dilution bridge"],
-            "interpretation_limit": "SBC is not automatically bad, but it must be measured against cash generation and per-share value.",
-        },
+    annual_year = max(annual)
+    annual_facts = annual[annual_year]
+    prior_annual_facts = annual.get(annual_year - 1, {})
+    latest_period = sorted(quarterly)[-1]
+    latest_facts = quarterly[latest_period]
+    prior_period = f"{int(latest_period[:4]) - 1}{latest_period[4:]}"
+    prior_quarter_facts = quarterly.get(prior_period, {})
+
+    topic_results = [
+        _trend_revenue_growth(annual_facts, prior_annual_facts, latest_facts, prior_quarter_facts),
+        _trend_margin_quality(annual_facts, latest_facts, prior_quarter_facts),
+        _trend_cash_conversion(annual_facts, latest_facts),
+        _trend_balance_sheet(annual_facts, latest_facts),
+        _trend_dilution(latest_facts, prior_quarter_facts),
     ]
+    changed = [topic for topic in topic_results if topic["status"] == "trend_changed"]
+    high_priority_changed = [
+        topic for topic in changed if topic["topic"] in {"revenue_growth", "margin_quality", "cash_conversion"}
+    ]
+    unclear_high_priority = [
+        topic
+        for topic in topic_results
+        if topic["topic"] in {"revenue_growth", "margin_quality", "cash_conversion"}
+        and topic["status"] == "trend_unclear"
+    ]
+    if high_priority_changed:
+        overall_status = "trend_changed"
+    elif len(unclear_high_priority) >= 2:
+        overall_status = "trend_unclear"
+    elif all(
+        topic["status"] == "trend_confirmed"
+        for topic in topic_results
+        if topic["topic"] in {"revenue_growth", "margin_quality", "cash_conversion"}
+    ):
+        overall_status = "trend_confirmed"
+    elif changed:
+        overall_status = "trend_changed"
+    else:
+        overall_status = "trend_unclear"
+
+    directions = {topic.get("direction") for topic in changed if topic.get("direction")}
+    if "negative" in directions and "positive" in directions:
+        direction = "mixed"
+    elif "negative" in directions:
+        direction = "negative"
+    elif "positive" in directions:
+        direction = "positive"
+    else:
+        direction = "neutral_or_unclear"
+
     return {
-        "formula_id": "financial_quality_questions_v1",
-        "status": "calculated" if any(question["status"] != "missing" for question in questions) else "missing_required_facts",
-        "questions": questions,
-        "note": "Ranked question layer for the Financial Metrics Agent. Metrics are ordered by value-investor decision usefulness.",
+        "formula_id": "latest_interim_trend_v1",
+        "status": "calculated",
+        "overall_status": overall_status,
+        "direction": direction,
+        "annual_anchor_year": annual_year,
+        "latest_period_end": latest_period,
+        "same_quarter_prior_period_end": prior_period if prior_quarter_facts else None,
+        "topic_results": topic_results,
+        "note": "Compares latest official quarter against the annual baseline and same-quarter prior year. Trend changed can be positive or negative; it means the quarterly update changes the annual-report baseline.",
     }
 
 
@@ -947,6 +1307,308 @@ def _nopat_for_year(facts: dict[str, dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _source_of_growth_result(
+    *,
+    period: int | str,
+    facts: dict[str, dict[str, Any]],
+    prior_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    period_fields = {"year": period} if isinstance(period, int) else {"period_end": period}
+    if "revenue" not in facts:
+        return {**period_fields, "status": "missing_required_facts", "missing": ["revenue"]}
+    component_metrics = _revenue_component_metrics(facts)
+    if not component_metrics:
+        return {
+            **period_fields,
+            "status": "missing_required_facts",
+            "missing": ["official segment/product/geography/take-rate revenue component facts"],
+        }
+    revenue = facts["revenue"]["value"]
+    prior_revenue = _value(prior_facts, "revenue")
+    revenue_delta = revenue - prior_revenue if prior_revenue is not None else None
+    component_details = []
+    attributed_revenue = 0.0
+    for metric in component_metrics:
+        value = facts[metric]["value"]
+        prior_value = _value(prior_facts, metric)
+        component_delta = value - prior_value if prior_value is not None else None
+        attributed_revenue += value
+        component_details.append(
+            _compact_values(
+                {
+                    "metric": metric,
+                    "value": value,
+                    "share_of_revenue": _safe_div(value, revenue),
+                    "yoy_growth": _growth_rate(value, prior_value),
+                    "revenue_growth_contribution": _safe_div(component_delta, revenue_delta)
+                    if revenue_delta not in {None, 0}
+                    else None,
+                    "delta": component_delta,
+                }
+            )
+        )
+    top_component = max(component_details, key=lambda row: abs(float(row.get("value") or 0)))
+    return {
+        **period_fields,
+        "status": "calculated",
+        "value": _safe_div(attributed_revenue, revenue),
+        "unit": "ratio",
+        "formula": "sum(official revenue components) / total revenue",
+        "attributed_revenue": attributed_revenue,
+        "unattributed_revenue": revenue - attributed_revenue,
+        "revenue_growth_yoy": _growth_rate(revenue, prior_revenue),
+        "top_component": top_component,
+        "component_details": component_details,
+        "warning_flags": _source_of_growth_warnings(attributed_revenue, revenue, component_details),
+        "source_fact_ids": [facts["revenue"]["fact_id"]]
+        + _source_fact_ids_for(facts, component_metrics)
+        + _source_fact_ids_for(prior_facts, ["revenue"] + component_metrics),
+    }
+
+
+def _revenue_component_metrics(facts: dict[str, dict[str, Any]]) -> list[str]:
+    configured = [metric for metric in REVENUE_COMPONENT_METRICS if metric in facts]
+    dynamic = [
+        metric
+        for metric in facts
+        if metric.endswith("_revenue")
+        and metric != "revenue"
+        and not metric.startswith("non_gaap_")
+        and metric not in REVENUE_COMPONENT_EXCLUDE
+        and metric not in configured
+    ]
+    return sorted(configured + dynamic)
+
+
+def _working_capital_component_specs(
+    facts: dict[str, dict[str, Any]],
+    prior_facts: dict[str, dict[str, Any]],
+) -> list[tuple[str, str]]:
+    has_combined_payables = (
+        "accounts_payable_and_accrued_expenses" in facts
+        or "accounts_payable_and_accrued_expenses" in prior_facts
+    )
+    if not has_combined_payables:
+        return WORKING_CAPITAL_COMPONENTS
+    return [
+        (metric, role)
+        for metric, role in WORKING_CAPITAL_COMPONENTS
+        if metric not in {"accounts_payable", "accrued_expenses"}
+    ]
+
+
+def _latest_non_gaap_bridge(
+    quarterly: dict[str, dict[str, dict[str, Any]]],
+) -> dict[str, Any] | None:
+    periods = [
+        period
+        for period, facts in quarterly.items()
+        if any(str(metric).startswith("non_gaap_") for metric in facts)
+    ]
+    if not periods:
+        return None
+    period = sorted(periods)[-1]
+    facts = quarterly[period]
+    revenue = _value(facts, "revenue")
+    gaap_operating_income = _value(facts, "operating_income")
+    gaap_net_income = _value(facts, "net_income")
+    non_gaap_operating_income = _value(facts, "non_gaap_operating_income")
+    non_gaap_net_income = _value(facts, "non_gaap_net_income")
+    adjustments = {
+        metric: facts[metric]["value"]
+        for metric in NON_GAAP_ADJUSTMENT_METRICS
+        if metric in facts
+    }
+    adjustment_total = sum(abs(value) for value in adjustments.values())
+    result = {
+        "period_end": period,
+        "status": "calculated",
+        "value": _safe_div(
+            non_gaap_net_income - gaap_net_income
+            if non_gaap_net_income is not None and gaap_net_income is not None
+            else None,
+            abs(gaap_net_income) if gaap_net_income not in {None, 0} else None,
+        ),
+        "unit": "ratio",
+        "formula": "(non_gaap_net_income - gaap_net_income) / abs(gaap_net_income)",
+        "non_gaap_operating_income_uplift": _safe_div(
+            non_gaap_operating_income - gaap_operating_income
+            if non_gaap_operating_income is not None and gaap_operating_income is not None
+            else None,
+            abs(gaap_operating_income) if gaap_operating_income not in {None, 0} else None,
+        ),
+        "non_gaap_net_income_uplift": _safe_div(
+            non_gaap_net_income - gaap_net_income
+            if non_gaap_net_income is not None and gaap_net_income is not None
+            else None,
+            abs(gaap_net_income) if gaap_net_income not in {None, 0} else None,
+        ),
+        "non_gaap_adjustment_burden_to_revenue": _safe_div(adjustment_total, revenue),
+        "adjustments": adjustments,
+        "warning_flags": _non_gaap_warnings(
+            non_gaap_net_income_uplift=_safe_div(
+                non_gaap_net_income - gaap_net_income
+                if non_gaap_net_income is not None and gaap_net_income is not None
+                else None,
+                abs(gaap_net_income) if gaap_net_income not in {None, 0} else None,
+            ),
+            adjustment_burden_to_revenue=_safe_div(adjustment_total, revenue),
+        ),
+        "source_fact_ids": _source_fact_ids_for(
+            facts,
+            [
+                "revenue",
+                "operating_income",
+                "net_income",
+                "non_gaap_operating_income",
+                "non_gaap_net_income",
+                *NON_GAAP_ADJUSTMENT_METRICS,
+            ],
+        ),
+    }
+    return result
+
+
+def _trend_revenue_growth(
+    annual_facts: dict[str, dict[str, Any]],
+    prior_annual_facts: dict[str, dict[str, Any]],
+    latest_facts: dict[str, dict[str, Any]],
+    prior_quarter_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    annual_growth = _growth_rate(_value(annual_facts, "revenue"), _value(prior_annual_facts, "revenue"))
+    quarter_growth = _growth_rate(_value(latest_facts, "revenue"), _value(prior_quarter_facts, "revenue"))
+    values = {"annual_revenue_growth": annual_growth, "latest_quarter_revenue_yoy": quarter_growth}
+    if annual_growth is None or quarter_growth is None:
+        return _trend_topic("revenue_growth", "trend_unclear", "missing annual or same-quarter revenue growth", values)
+    if quarter_growth < annual_growth - 0.10 or (quarter_growth < 0 and annual_growth > 0):
+        return _trend_topic("revenue_growth", "trend_changed", "latest quarter revenue growth is materially weaker than the annual baseline", values, direction="negative")
+    if quarter_growth > annual_growth + 0.15:
+        return _trend_topic("revenue_growth", "trend_changed", "latest quarter revenue growth is materially stronger than the annual baseline", values, direction="positive")
+    if abs(quarter_growth - annual_growth) <= 0.05:
+        return _trend_topic("revenue_growth", "trend_confirmed", "latest quarter revenue growth is close to the annual baseline", values)
+    return _trend_topic("revenue_growth", "trend_unclear", "latest quarter revenue growth differs from the annual baseline but not enough for a hard trend change", values)
+
+
+def _trend_margin_quality(
+    annual_facts: dict[str, dict[str, Any]],
+    latest_facts: dict[str, dict[str, Any]],
+    prior_quarter_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    annual_margin = _margin(annual_facts, "operating_income")
+    latest_margin = _margin(latest_facts, "operating_income")
+    prior_quarter_margin = _margin(prior_quarter_facts, "operating_income")
+    margin_delta_yoy = latest_margin - prior_quarter_margin if latest_margin is not None and prior_quarter_margin is not None else None
+    values = {
+        "annual_operating_margin": annual_margin,
+        "latest_quarter_operating_margin": latest_margin,
+        "same_quarter_prior_operating_margin": prior_quarter_margin,
+        "quarter_margin_delta_yoy": margin_delta_yoy,
+    }
+    if annual_margin is None or latest_margin is None or prior_quarter_margin is None:
+        return _trend_topic("margin_quality", "trend_unclear", "missing annual or same-quarter operating margin", values)
+    if margin_delta_yoy < -0.03 or latest_margin < annual_margin - 0.05:
+        return _trend_topic("margin_quality", "trend_changed", "latest quarter margin is materially weaker than the annual baseline", values, direction="negative")
+    if margin_delta_yoy > 0.05 and latest_margin > annual_margin + 0.03:
+        return _trend_topic("margin_quality", "trend_changed", "latest quarter margin is materially stronger than the annual baseline", values, direction="positive")
+    if margin_delta_yoy >= -0.02 and latest_margin >= annual_margin - 0.03:
+        return _trend_topic("margin_quality", "trend_confirmed", "latest quarter margin is broadly consistent with the annual baseline", values)
+    return _trend_topic("margin_quality", "trend_unclear", "latest quarter margin moved, but the signal is not decisive", values)
+
+
+def _trend_cash_conversion(
+    annual_facts: dict[str, dict[str, Any]],
+    latest_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    annual_ratio = _safe_div(_value(annual_facts, "operating_cash_flow"), _value(annual_facts, "net_income"))
+    latest_ratio = _safe_div(_value(latest_facts, "operating_cash_flow"), _value(latest_facts, "net_income"))
+    values = {"annual_cfo_to_net_income": annual_ratio, "latest_quarter_cfo_to_net_income": latest_ratio}
+    if annual_ratio is None or latest_ratio is None:
+        return _trend_topic("cash_conversion", "trend_unclear", "missing annual or latest-quarter cash conversion", values)
+    if latest_ratio < 0.8 and annual_ratio >= 1.0:
+        return _trend_topic("cash_conversion", "trend_changed", "latest quarter cash conversion fell below the quality threshold", values, direction="negative")
+    if latest_ratio < annual_ratio - 0.5:
+        return _trend_topic("cash_conversion", "trend_changed", "latest quarter cash conversion is materially weaker than the annual baseline", values, direction="negative")
+    if latest_ratio >= 1.2 and annual_ratio < 0.9:
+        return _trend_topic("cash_conversion", "trend_changed", "latest quarter cash conversion is materially stronger than a weak annual baseline", values, direction="positive")
+    if latest_ratio >= 0.8 and abs(latest_ratio - annual_ratio) <= 0.3:
+        return _trend_topic("cash_conversion", "trend_confirmed", "latest quarter cash conversion is close to the annual baseline", values)
+    return _trend_topic("cash_conversion", "trend_unclear", "latest quarter cash conversion is too noisy for a hard trend decision", values)
+
+
+def _trend_balance_sheet(
+    annual_facts: dict[str, dict[str, Any]],
+    latest_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    annual_liabilities_assets = _safe_div(_value(annual_facts, "total_liabilities"), _value(annual_facts, "total_assets"))
+    latest_liabilities_assets = _safe_div(_value(latest_facts, "total_liabilities"), _value(latest_facts, "total_assets"))
+    annual_cash_liabilities = _safe_div(_value(annual_facts, "cash"), _value(annual_facts, "total_liabilities"))
+    latest_cash_liabilities = _safe_div(_value(latest_facts, "cash"), _value(latest_facts, "total_liabilities"))
+    values = {
+        "annual_liabilities_to_assets": annual_liabilities_assets,
+        "latest_quarter_liabilities_to_assets": latest_liabilities_assets,
+        "annual_cash_to_liabilities": annual_cash_liabilities,
+        "latest_quarter_cash_to_liabilities": latest_cash_liabilities,
+    }
+    if None in {annual_liabilities_assets, latest_liabilities_assets, annual_cash_liabilities, latest_cash_liabilities}:
+        return _trend_topic("balance_sheet", "trend_unclear", "missing annual or latest-quarter balance-sheet ratios", values)
+    if latest_liabilities_assets > annual_liabilities_assets + 0.05 or latest_cash_liabilities < annual_cash_liabilities * 0.8:
+        return _trend_topic("balance_sheet", "trend_changed", "latest quarter balance sheet is materially weaker than the annual baseline", values, direction="negative")
+    if latest_liabilities_assets < annual_liabilities_assets - 0.05 and latest_cash_liabilities > annual_cash_liabilities * 1.2:
+        return _trend_topic("balance_sheet", "trend_changed", "latest quarter balance sheet is materially stronger than the annual baseline", values, direction="positive")
+    return _trend_topic("balance_sheet", "trend_confirmed", "latest quarter balance sheet is broadly consistent with the annual baseline", values)
+
+
+def _trend_dilution(
+    latest_facts: dict[str, dict[str, Any]],
+    prior_quarter_facts: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    share_growth = _growth_rate(_value(latest_facts, "diluted_shares"), _value(prior_quarter_facts, "diluted_shares"))
+    values = {"latest_quarter_diluted_shares_yoy": share_growth}
+    if share_growth is None:
+        return _trend_topic("dilution", "trend_unclear", "missing same-quarter diluted shares", values)
+    if share_growth > 0.05:
+        return _trend_topic("dilution", "trend_changed", "diluted share count increased by more than 5% YoY", values, direction="negative")
+    if share_growth < -0.02:
+        return _trend_topic("dilution", "trend_changed", "diluted share count declined by more than 2% YoY", values, direction="positive")
+    if abs(share_growth) <= 0.02:
+        return _trend_topic("dilution", "trend_confirmed", "dilution is within the 2% confirmation band", values)
+    return _trend_topic("dilution", "trend_unclear", "dilution is above the confirmation band but below the hard change threshold", values)
+
+
+def _trend_topic(
+    topic: str,
+    status: str,
+    reason: str,
+    values: dict[str, Any],
+    *,
+    direction: str = "neutral_or_unclear",
+) -> dict[str, Any]:
+    return {
+        "topic": topic,
+        "status": status,
+        "direction": direction,
+        "reason": reason,
+        "values": _compact_values(values),
+    }
+
+
+def _margin(facts: dict[str, dict[str, Any]], numerator_metric: str) -> float | None:
+    return _safe_div(_value(facts, numerator_metric), _value(facts, "revenue"))
+
+
+def _source_fact_ids_for(
+    facts: dict[str, dict[str, Any]],
+    metrics: list[str],
+) -> list[str]:
+    return [facts[metric]["fact_id"] for metric in metrics if metric in facts]
+
+
+def _growth_rate(current: float | int | None, previous: float | int | None) -> float | None:
+    if current is None or previous in {None, 0}:
+        return None
+    return (current - previous) / previous
+
+
 def _safe_div(numerator: float | int | None, denominator: float | int | None) -> float | None:
     if numerator is None or denominator in {None, 0}:
         return None
@@ -957,167 +1619,73 @@ def _compact_values(values: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in values.items() if value is not None}
 
 
-def _pct_text(value: Any) -> str:
-    if value is None:
-        return "not available"
-    return f"{float(value) * 100:.1f}%"
-
-
-def _ratio_text(value: Any) -> str:
-    if value is None:
-        return "not available"
-    return f"{float(value):.2f}x"
-
-
-def _growth_quality_answer(
-    margin: dict[str, Any] | None,
-    incremental_margin: dict[str, Any] | None,
-) -> str:
-    if not margin:
-        return "Missing. Revenue and margin facts are required before growth quality can be judged."
-    revenue_growth = margin.get("revenue_growth_yoy")
-    incremental_operating_margin = incremental_margin.get("incremental_operating_margin") if incremental_margin else None
-    return (
-        f"Partial. Latest revenue growth is {_pct_text(revenue_growth)} and operating margin is "
-        f"{_pct_text(margin.get('operating_margin'))}; incremental operating margin is "
-        f"{_pct_text(incremental_operating_margin)}. This answers whether growth is profitable, but not yet exactly where growth came from."
-    )
-
-
-def _profitability_with_scale_answer(
-    margin: dict[str, Any] | None,
-    incremental_margin: dict[str, Any] | None,
-) -> str:
-    if not margin:
-        return "Missing. Revenue, gross profit, operating income, and net income are required."
-    return (
-        f"Latest gross margin is {_pct_text(margin.get('gross_margin'))}, operating margin is "
-        f"{_pct_text(margin.get('operating_margin'))}, and net margin is {_pct_text(margin.get('net_margin'))}. "
-        f"Incremental operating margin is {_pct_text(incremental_margin.get('incremental_operating_margin') if incremental_margin else None)}."
-    )
-
-
-def _cash_profit_quality_answer(
-    cash_conversion: dict[str, Any] | None,
-    owner_earnings: dict[str, Any] | None,
-    sbc_burden: dict[str, Any] | None,
-) -> str:
-    if not cash_conversion:
-        return "Missing. Net income and operating cash flow are required."
-    owner_text = "available" if owner_earnings else "not available"
-    return (
-        f"Latest cash conversion is {_ratio_text(cash_conversion.get('value'))}. "
-        f"Owner earnings are {owner_text}; SBC consumed "
-        f"{_pct_text(sbc_burden.get('sbc_to_operating_cash_flow') if sbc_burden else None)} of operating cash flow."
-    )
-
-
-def _capital_need_answer(
-    capital_intensity: dict[str, Any] | None,
-    roic: dict[str, Any] | None,
-    incremental_roic: dict[str, Any] | None,
-) -> str:
-    if not capital_intensity:
-        return "Missing. Revenue, operating cash flow, capex, and free cash flow are required."
-    return (
-        f"Latest capex/revenue is {_pct_text(capital_intensity.get('capex_to_revenue'))}; "
-        f"FCF margin is {_pct_text(capital_intensity.get('free_cash_flow_margin'))}; "
-        f"ROIC is {_pct_text(roic.get('value') if roic else None)}; incremental ROIC proxy is "
-        f"{_pct_text(incremental_roic.get('value') if incremental_roic else None)}."
-    )
-
-
-def _balance_sheet_answer(balance_sheet: dict[str, Any] | None) -> str:
-    if not balance_sheet:
-        return "Missing. Cash, total assets, and total liabilities are required."
-    return (
-        f"Latest liabilities/assets is {_pct_text(balance_sheet.get('liabilities_to_assets'))}; "
-        f"cash/total liabilities is {_ratio_text(balance_sheet.get('cash_to_total_liabilities'))}; "
-        f"debt/cash is {_ratio_text(balance_sheet.get('debt_to_cash'))}."
-    )
-
-
-def _sbc_answer(sbc_burden: dict[str, Any] | None) -> str:
-    if not sbc_burden:
-        return "Missing. SBC, revenue, and operating cash flow are required."
-    return (
-        f"Latest SBC/revenue is {_pct_text(sbc_burden.get('sbc_to_revenue'))}; "
-        f"SBC/operating cash flow is {_pct_text(sbc_burden.get('sbc_to_operating_cash_flow'))}; "
-        f"diluted share growth is {_pct_text(sbc_burden.get('diluted_shares_yoy'))}."
-    )
-
-
-def _growth_quality_warnings(
-    margin: dict[str, Any] | None,
-    incremental_margin: dict[str, Any] | None,
+def _working_capital_warnings(
+    component_details: list[dict[str, Any]],
+    working_capital_cash_tailwind: float | None,
 ) -> list[str]:
     warnings = []
-    if margin and margin.get("revenue_growth_yoy") is not None and margin.get("revenue_growth_yoy") < 0:
-        warnings.append("Revenue declined year over year.")
-    if incremental_margin and (incremental_margin.get("incremental_operating_margin") or 0) < 0:
-        warnings.append("Incremental operating margin is negative.")
-    if incremental_margin and incremental_margin.get("incremental_free_cash_flow_margin") is not None and incremental_margin["incremental_free_cash_flow_margin"] < 0:
-        warnings.append("Incremental FCF margin is negative.")
+    for component in component_details:
+        growth_gap = component.get("growth_minus_revenue_growth")
+        if growth_gap is None:
+            continue
+        metric = component.get("metric")
+        role = component.get("role")
+        if role == "cash_use_asset" and growth_gap > 0.10:
+            warnings.append(f"{metric} grew more than 10 percentage points faster than revenue.")
+        if role == "cash_source_liability" and growth_gap > 0.20:
+            warnings.append(f"{metric} grew more than 20 percentage points faster than revenue; cash flow may have a working-capital tailwind.")
+    if working_capital_cash_tailwind is not None and working_capital_cash_tailwind > 0.05:
+        warnings.append("Working-capital source liabilities added more than 5% of revenue to cash-flow tailwind.")
+    if working_capital_cash_tailwind is not None and working_capital_cash_tailwind < -0.05:
+        warnings.append("Working-capital changes consumed more than 5% of revenue.")
     return warnings
 
 
-def _margin_warnings(
-    margin: dict[str, Any] | None,
-    incremental_margin: dict[str, Any] | None,
+def _tax_accounting_warnings(
+    *,
+    effective_tax_rate: float | None,
+    cash_tax_to_tax_expense: float | None,
+    investment_income_to_pretax: float | None,
+    impairment_to_revenue: float | None,
 ) -> list[str]:
     warnings = []
-    if margin and (margin.get("operating_margin") or 0) < 0:
-        warnings.append("Operating margin is negative.")
-    if incremental_margin and (incremental_margin.get("incremental_operating_margin") or 0) < (margin.get("operating_margin") if margin else 0):
-        warnings.append("Incremental operating margin is below latest operating margin.")
+    if effective_tax_rate is not None and (effective_tax_rate < 0.05 or effective_tax_rate > 0.35):
+        warnings.append("Effective tax rate is outside the 5%-35% default review band.")
+    if cash_tax_to_tax_expense is not None and cash_tax_to_tax_expense < 0.5:
+        warnings.append("Cash taxes are less than half of reported tax expense.")
+    if investment_income_to_pretax is not None and abs(investment_income_to_pretax) > 0.2:
+        warnings.append("Investment income/loss is more than 20% of pretax income.")
+    if impairment_to_revenue is not None and abs(impairment_to_revenue) > 0.05:
+        warnings.append("Impairment charges exceed 5% of revenue.")
     return warnings
 
 
-def _cash_profit_warnings(
-    cash_conversion: dict[str, Any] | None,
-    sbc_burden: dict[str, Any] | None,
+def _non_gaap_warnings(
+    *,
+    non_gaap_net_income_uplift: float | None,
+    adjustment_burden_to_revenue: float | None,
 ) -> list[str]:
     warnings = []
-    if cash_conversion and cash_conversion.get("value") is not None and cash_conversion["value"] < 1:
-        warnings.append("Operating cash flow is below net income.")
-    if sbc_burden and sbc_burden.get("sbc_to_operating_cash_flow") is not None and sbc_burden["sbc_to_operating_cash_flow"] > 0.2:
-        warnings.append("SBC consumes more than 20% of operating cash flow.")
+    if non_gaap_net_income_uplift is not None and non_gaap_net_income_uplift > 0.2:
+        warnings.append("Non-GAAP net income is more than 20% above GAAP net income.")
+    if adjustment_burden_to_revenue is not None and adjustment_burden_to_revenue > 0.1:
+        warnings.append("Non-GAAP adjustments exceed 10% of revenue.")
     return warnings
 
 
-def _capital_need_warnings(
-    capital_intensity: dict[str, Any] | None,
-    incremental_roic: dict[str, Any] | None,
+def _source_of_growth_warnings(
+    attributed_revenue: float,
+    revenue: float | int,
+    component_details: list[dict[str, Any]],
 ) -> list[str]:
     warnings = []
-    if capital_intensity and capital_intensity.get("free_cash_flow_margin") is not None and capital_intensity["free_cash_flow_margin"] < 0:
-        warnings.append("Free cash flow margin is negative.")
-    if incremental_roic and incremental_roic.get("delta_invested_capital") is not None and incremental_roic["delta_invested_capital"] <= 0:
-        warnings.append("Incremental ROIC proxy is hard to interpret because invested capital did not increase.")
-    return warnings
-
-
-def _balance_sheet_warnings(balance_sheet: dict[str, Any] | None) -> list[str]:
-    warnings = []
-    if not balance_sheet:
-        return warnings
-    if balance_sheet.get("cash_to_total_liabilities") is not None and balance_sheet["cash_to_total_liabilities"] < 0.5:
-        warnings.append("Cash covers less than half of total liabilities.")
-    if balance_sheet.get("liabilities_to_assets") is not None and balance_sheet["liabilities_to_assets"] > 0.7:
-        warnings.append("Liabilities exceed 70% of assets.")
-    if balance_sheet.get("missing_optional"):
-        warnings.append("Explicit debt fact is missing for this year.")
-    return warnings
-
-
-def _sbc_warnings(sbc_burden: dict[str, Any] | None) -> list[str]:
-    warnings = []
-    if not sbc_burden:
-        return warnings
-    if sbc_burden.get("sbc_to_revenue") is not None and sbc_burden["sbc_to_revenue"] > 0.1:
-        warnings.append("SBC exceeds 10% of revenue.")
-    if sbc_burden.get("diluted_shares_yoy") is not None and sbc_burden["diluted_shares_yoy"] > 0.05:
-        warnings.append("Diluted shares increased by more than 5% year over year.")
+    coverage = _safe_div(attributed_revenue, revenue)
+    if coverage is not None and coverage < 0.75:
+        warnings.append("Official revenue components explain less than 75% of revenue.")
+    for component in component_details:
+        contribution = component.get("revenue_growth_contribution")
+        if contribution is not None and abs(contribution) > 1.2:
+            warnings.append(f"{component.get('metric')} contribution to revenue growth is unusually large or offset by other components.")
     return warnings
 
 

@@ -165,7 +165,8 @@ Potential improvements:
 
 Current status:
 
-- Calculates Owner Earnings V1, EV, FCF yield, owner-earnings yield, cash conversion, and ROIC.
+- Calculates financial-quality metrics such as Owner Earnings V1, cash conversion, margins, capital intensity, SBC burden, balance-sheet risk, ROIC, and incremental ROIC.
+- EV, FCF yield, owner-earnings yield, and investment-adjusted operating yield have been moved to the Valuation Agent.
 - Does not apply ROIC thresholds.
 
 Potential improvements:
@@ -299,7 +300,8 @@ Potential improvements:
 
 Current status:
 
-- First-pass yield valuation exists through EV, FCF yield, owner-earnings yield, cash conversion, and ROIC context.
+- First-pass yield valuation exists through EV, FCF yield, owner-earnings yield, and investment-adjusted operating yield.
+- The Valuation Agent consumes financial metrics such as owner earnings, cash/debt, cash conversion, and ROIC, but owns the price-dependent calculations.
 - No full intrinsic value model yet.
 
 Potential improvements:

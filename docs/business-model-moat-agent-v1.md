@@ -87,6 +87,61 @@ The agent should eventually score or classify:
 
 These criteria should be source-linked and industry-relative. The system should avoid universal thresholds for things like gross margin, churn, inventory days, or capital intensity.
 
+## Business Quality Classification
+
+This classification belongs to the Business Model / Moat Agent, not the Financial Metrics Agent. Financial metrics can provide evidence, but the classification requires interpretation of durability, reinvestment runway, pricing power, competition, and capital allocation.
+
+### Great Business
+
+Traits:
+
+- Very high returns on capital.
+- Growth requires little incremental capital.
+- Strong pricing power.
+- Can withstand inflation without large new capital investment.
+- Generates excess cash that can be distributed or redeployed.
+
+Evidence needed:
+
+- durable gross and operating margins,
+- strong cash conversion,
+- high and persistent ROIC,
+- low incremental capital needs,
+- evidence that customers accept price increases or value proposition remains strong,
+- business-model evidence that competitors cannot easily copy the economics.
+
+### Good Business
+
+Traits:
+
+- Reasonable returns on capital.
+- Growth requires meaningful reinvestment.
+- Can compound value if reinvestment returns remain attractive.
+
+Evidence needed:
+
+- ROIC and incremental ROIC remain acceptable through cycles,
+- reinvestment creates durable earnings power,
+- balance sheet can fund growth without repeated dilution or financial stress.
+
+### Gruesome Business
+
+Traits:
+
+- Low returns on capital.
+- Requires continuous reinvestment just to survive.
+- Weak pricing power.
+- Value-destroying over time.
+
+Evidence needed:
+
+- margins deteriorate with scale,
+- cash conversion is weak after working-capital review,
+- growth consumes heavy capital without attractive returns,
+- competition or regulation prevents pricing power.
+
+The agent should not classify a company only because one metric is high or low. Classification should be a synthesis of official financial evidence, business-model evidence, external moat validation, and competitor comparison.
+
 ## Proposed Subagent Structure
 
 The current V1 structure already has the beginning of this pipeline. The target structure is:

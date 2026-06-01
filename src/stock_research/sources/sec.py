@@ -6,7 +6,13 @@ import re
 from pathlib import Path
 from typing import Any
 
-from stock_research.sources.document_policy import classify_sec_document_text
+from stock_research.sources.document_policy import (
+    DEEP_RESEARCH_CATEGORIES,
+    CAPITAL_MARKETS_FORMS,
+    GOVERNANCE_FORMS,
+    PROSPECTUS_FORMS,
+    classify_sec_document_text,
+)
 from stock_research.sources.http import fetch_bytes, fetch_json, sec_user_agent, write_bytes, write_json
 
 
@@ -29,6 +35,18 @@ FINANCIAL_RESULT_KEYWORDS = (
     "revenues",
     "net income",
     "cash flow",
+)
+
+DEEP_RESEARCH_PRIMARY_FORMS = (
+    PROSPECTUS_FORMS
+    | GOVERNANCE_FORMS
+    | CAPITAL_MARKETS_FORMS
+    | {
+        "8-K",
+        "8-K/A",
+        "10-Q",
+        "10-Q/A",
+    }
 )
 
 
@@ -82,11 +100,13 @@ class SecClient:
         url = SEC_SUBMISSIONS_URL.format(cik_padded=cik_padded)
         company_dir = self.cache_dir / cik_padded
         submissions_path = company_dir / "submissions.json"
-        if submissions_path.exists():
-            submissions = json.loads(submissions_path.read_text(encoding="utf-8"))
-        else:
+        try:
             submissions = fetch_json(url, headers=self.data_headers)
             write_json(submissions_path, submissions)
+        except Exception:
+            if not submissions_path.exists():
+                raise
+            submissions = json.loads(submissions_path.read_text(encoding="utf-8"))
 
         filings = submissions.get("filings", {})
         older_files = filings.get("files", [])
@@ -161,6 +181,22 @@ class SecClient:
         return data
 
     def download_6k_if_financial(self, filing: dict[str, Any]) -> list[dict[str, Any]]:
+        return self.download_6k_if_research_relevant(
+            filing,
+            allowed_categories={
+                "KEEP_CORE_INTERIM_EARNINGS",
+                "KEEP_SECONDARY_INTERIM_FINANCIAL_CONTEXT",
+            },
+            require_financial_results=True,
+        )
+
+    def download_6k_if_research_relevant(
+        self,
+        filing: dict[str, Any],
+        *,
+        allowed_categories: set[str] | None = None,
+        require_financial_results: bool = False,
+    ) -> list[dict[str, Any]]:
         if str(filing.get("form", "")).upper() not in {"6-K", "6-K/A"}:
             return []
         cached = self.cached_downloaded_documents(filing)
@@ -178,7 +214,7 @@ class SecClient:
             combined_text_parts.append(data[:1_000_000].decode("utf-8", errors="ignore").lower())
 
         combined_text = "\n".join(combined_text_parts)
-        if not self._looks_like_financial_results(combined_text):
+        if require_financial_results and not self._looks_like_financial_results(combined_text):
             return []
 
         saved = []
@@ -192,8 +228,27 @@ class SecClient:
             )
             if classification["category"] == "DROP_SEC_INDEX_OR_HEADERS":
                 continue
+            if allowed_categories is not None and classification["category"] not in allowed_categories:
+                continue
+            if allowed_categories is None and classification["category"] not in DEEP_RESEARCH_CATEGORIES:
+                continue
             saved.append(self.save_filing_bytes(filing, name, data, role=role))
         return saved
+
+    def download_deep_research_filing(self, filing: dict[str, Any]) -> list[dict[str, Any]]:
+        form = str(filing.get("form", "")).upper()
+        if form in {"6-K", "6-K/A"}:
+            return self.download_6k_if_research_relevant(filing)
+        if form not in DEEP_RESEARCH_PRIMARY_FORMS:
+            return []
+        cached = self.cached_downloaded_documents(filing)
+        if cached:
+            return cached
+        document = self.download_filing(filing)
+        category = document.get("research_category")
+        if category in DEEP_RESEARCH_CATEGORIES or category == "REVIEW_UNCLEAR_EXHIBIT":
+            return [document]
+        return []
 
     def save_filing_bytes(
         self,
@@ -278,12 +333,17 @@ class SecClient:
         form = str(record.get("form") or "").upper()
         description = str(record.get("primaryDocDescription") or "").lower()
         primary_doc = str(record.get("primaryDocument") or "").lower()
-        if form in {"20-F", "20-F/A", "10-K", "10-Q"}:
+        if form in {"20-F", "20-F/A", "10-K", "10-K/A", "10-Q", "10-Q/A"}:
             return True
         if form in {"6-K", "6-K/A"}:
             haystack = f"{description} {primary_doc}"
             return any(keyword in haystack for keyword in FINANCIAL_RESULT_KEYWORDS)
         return False
+
+    @staticmethod
+    def is_deep_research_filing(record: dict[str, Any]) -> bool:
+        form = str(record.get("form") or "").upper()
+        return form in DEEP_RESEARCH_PRIMARY_FORMS or form in {"6-K", "6-K/A"}
 
     @staticmethod
     def download_priority(record: dict[str, Any]) -> int:
@@ -296,6 +356,12 @@ class SecClient:
             return 3
         if SecClient.is_financial_report(record):
             return 4
+        if form in PROSPECTUS_FORMS:
+            return 5
+        if form in CAPITAL_MARKETS_FORMS:
+            return 6
+        if form in GOVERNANCE_FORMS or form in {"8-K", "8-K/A"}:
+            return 7
         return 99
 
     @staticmethod

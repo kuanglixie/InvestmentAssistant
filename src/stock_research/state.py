@@ -22,11 +22,24 @@ class ResearchState(TypedDict, total=False):
     verification_results: list[dict[str, Any]]
     market_inputs: dict[str, Any]
     metrics: list[dict[str, Any]]
+    diagnostic_findings: dict[str, Any]
+    financial_investigation_notes: dict[str, Any]
+    material_event_scan: dict[str, Any]
+    financial_report_pack: dict[str, Any]
+    financial_report_pack_path: str | None
+    official_report_evidence_pack: dict[str, Any]
+    official_report_evidence_pack_path: str | None
+    official_report_evidence_report_path: str | None
+    management_communication_pack: dict[str, Any]
+    management_communication_pack_path: str | None
+    valuation_metrics: list[dict[str, Any]]
     learning_context: dict[str, Any]
     business_model_findings: dict[str, Any]
     external_moat_findings: dict[str, Any]
     public_voice_findings: dict[str, Any]
     leadership_findings: dict[str, Any]
+    right_people_report_path: str | None
+    right_people_chinese_report_path: str | None
     executive_transcript_findings: dict[str, Any]
     official_event_transcript_findings: dict[str, Any]
     alternative_data_findings: dict[str, Any]
@@ -38,6 +51,7 @@ class ResearchState(TypedDict, total=False):
     agent_reports: list[dict[str, Any]]
     final_report_path: str | None
     financial_results_report_path: str | None
+    financial_easy_reading_report_path: str | None
     business_model_report_path: str | None
     data_linkage_report_path: str | None
     audit_events: list[dict[str, Any]]
@@ -76,11 +90,24 @@ def make_initial_state(
         "verification_results": [],
         "market_inputs": {},
         "metrics": [],
+        "diagnostic_findings": {},
+        "financial_investigation_notes": {},
+        "material_event_scan": {},
+        "financial_report_pack": {},
+        "financial_report_pack_path": None,
+        "official_report_evidence_pack": {},
+        "official_report_evidence_pack_path": None,
+        "official_report_evidence_report_path": None,
+        "management_communication_pack": {},
+        "management_communication_pack_path": None,
+        "valuation_metrics": [],
         "learning_context": {},
         "business_model_findings": {},
         "external_moat_findings": {},
         "public_voice_findings": {},
         "leadership_findings": {},
+        "right_people_report_path": None,
+        "right_people_chinese_report_path": None,
         "executive_transcript_findings": {},
         "official_event_transcript_findings": {},
         "alternative_data_findings": {},
@@ -92,6 +119,7 @@ def make_initial_state(
         "agent_reports": [],
         "final_report_path": None,
         "financial_results_report_path": None,
+        "financial_easy_reading_report_path": None,
         "business_model_report_path": None,
         "data_linkage_report_path": None,
         "audit_events": [],

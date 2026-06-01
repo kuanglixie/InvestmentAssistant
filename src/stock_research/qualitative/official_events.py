@@ -27,6 +27,14 @@ OFFICIAL_EVENT_USER_AGENT = "stock-research-system/0.1 earnings-call-transcript-
 
 ALPHA_VANTAGE_KEY_NAMES = ("ALPHA_VANTAGE_API_KEY", "ALPHAVANTAGE_API_KEY")
 
+BLOCKED_SOURCE_CANDIDATE_PROVIDERS = {
+    "globenewswire_release",
+}
+
+BLOCKED_SOURCE_CANDIDATE_DOMAINS = (
+    "globenewswire.com",
+)
+
 OFFICIAL_EVENT_TERM_GROUPS = {
     "long_term_investment": [
         "long-term",
@@ -355,7 +363,9 @@ def _collect_source_candidate_source(source: dict[str, Any], *, cache_dir: Path,
         if not payload:
             continue
         candidates.extend(payload.get("candidates") or [])
-    deduped = _dedupe_candidates(candidates)
+    filtered_candidates = [candidate for candidate in candidates if _is_allowed_source_candidate(candidate)]
+    blocked_candidate_count = len(candidates) - len(filtered_candidates)
+    deduped = _dedupe_candidates(filtered_candidates)
     if deduped:
         write_json(
             source_dir / "source_candidates.json",
@@ -370,10 +380,12 @@ def _collect_source_candidate_source(source: dict[str, Any], *, cache_dir: Path,
         {
             "status": "source_candidates_recorded" if deduped else "source_candidates_ready_none_recorded",
             "source_candidate_count": len(deduped),
+            "blocked_source_candidate_count": blocked_candidate_count,
             "candidate_providers": sorted({str(item.get("provider") or "unknown") for item in deduped}),
             "cache_paths": [str(source_dir / "source_candidates.json")] if deduped else [],
             "notes": [
                 "Source candidates are link-only evidence. Full third-party transcript text is not copied unless source rights permit storage.",
+                "Blocked third-party press-release mirrors are excluded from source candidates.",
             ],
         }
     )
@@ -935,6 +947,14 @@ def _dedupe_candidates(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]
             key = hashlib.sha256(json.dumps(candidate, sort_keys=True).encode("utf-8")).hexdigest()[:16]
         by_key[key] = candidate
     return list(by_key.values())
+
+
+def _is_allowed_source_candidate(candidate: dict[str, Any]) -> bool:
+    provider = str(candidate.get("provider") or "").lower()
+    if provider in BLOCKED_SOURCE_CANDIDATE_PROVIDERS:
+        return False
+    url = str(candidate.get("source_url") or candidate.get("url") or "").lower()
+    return not any(domain in url for domain in BLOCKED_SOURCE_CANDIDATE_DOMAINS)
 
 
 def _read_json_if_exists(path: str | Path) -> dict[str, Any] | None:
