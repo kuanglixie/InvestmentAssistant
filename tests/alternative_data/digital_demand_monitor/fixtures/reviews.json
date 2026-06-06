@@ -1,0 +1,58 @@
+[
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "ios",
+    "review_id": "r1",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rating": 1,
+    "title": "Late delivery",
+    "text": "My order was delayed for weeks and tracking never updated.",
+    "review_date": "2026-05-27T00:00:00Z"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "ios",
+    "review_id": "r2",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rating": 2,
+    "title": "Refund problem",
+    "text": "The refund process was confusing and customer service did not help.",
+    "review_date": "2026-05-27T00:00:00Z"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "ios",
+    "review_id": "r3",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rating": 5,
+    "title": "Cheap and good",
+    "text": "Good deals and fast checkout.",
+    "review_date": "2026-05-26T00:00:00Z"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "android",
+    "review_id": "r4",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rating": 1,
+    "title": "App bug",
+    "text": "The app keeps crashing during payment checkout.",
+    "review_date": "2026-05-26T00:00:00Z"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "android",
+    "review_id": "r5",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rating": 5,
+    "title": "Useful",
+    "text": "Lots of cheap coupons and useful products.",
+    "review_date": "2026-05-25T00:00:00Z"
+  }
+]
+

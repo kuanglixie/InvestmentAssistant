@@ -1,0 +1,143 @@
+{
+  "status": "source_plan_v1",
+  "objective": "Monitor whether Temu/PDD and key competitors are driving demand through paid social, creator/commercial content, and short-form video creatives.",
+  "primary_questions": [
+    "Is growth being bought through paid acquisition or creator/commercial content?",
+    "Which products, countries, and value propositions are being pushed?",
+    "Are competitors increasing creative volume or copying Temu-style offers?",
+    "Are discount/free-shipping/free-gift claims rising versus prior periods?"
+  ],
+  "brands": [
+    {
+      "brand_id": "temu",
+      "names": ["Temu", "PDD", "Pinduoduo"],
+      "domains": ["temu.com"]
+    },
+    {
+      "brand_id": "shein",
+      "names": ["SHEIN", "Shein"],
+      "domains": ["shein.com"]
+    },
+    {
+      "brand_id": "aliexpress",
+      "names": ["AliExpress", "AliExpress Choice"],
+      "domains": ["aliexpress.com", "aliexpress.us"]
+    },
+    {
+      "brand_id": "tiktok_shop",
+      "names": ["TikTok Shop"],
+      "domains": ["tiktok.com"]
+    },
+    {
+      "brand_id": "amazon",
+      "names": ["Amazon", "Amazon Haul"],
+      "domains": ["amazon.com"]
+    },
+    {
+      "brand_id": "walmart",
+      "names": ["Walmart"],
+      "domains": ["walmart.com"]
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "tiktok_commercial_content_api_ads",
+      "platform": "tiktok",
+      "access_method": "official_api",
+      "endpoint": "POST https://open.tiktokapis.com/v2/research/adlib/ad/query/",
+      "credential_status": "requires_approved_research_client_and_bearer_token",
+      "coverage_notes": "Best official route for TikTok ad-library data. Start with EEA country codes and brand/search terms.",
+      "query_keys": ["search_term", "country_code", "ad_published_date_range", "max_count", "search_id"],
+      "target_fields": [
+        "ad.id",
+        "advertiser.business_name",
+        "ad.first_shown_date",
+        "ad.last_shown_date",
+        "ad.videos",
+        "ad.status",
+        "ad.reach",
+        "ad.targeting"
+      ],
+      "cadence": "daily_or_weekly",
+      "mvp_fallback": "manual_json_or_csv_export_from_library_ui"
+    },
+    {
+      "source_id": "tiktok_commercial_content_api_creator_content",
+      "platform": "tiktok",
+      "access_method": "official_api",
+      "endpoint": "POST https://open.tiktokapis.com/v2/research/adlib/commercial_content/query/",
+      "credential_status": "requires_approved_research_client_and_bearer_token",
+      "coverage_notes": "Useful for paid partnership and brand-sponsored commercial content, especially creator-led demand.",
+      "query_keys": ["content_published_date_range", "creator_country_code", "creator_usernames", "max_count", "search_id"],
+      "target_fields": ["id", "create_date", "label", "brand_names", "creator", "videos"],
+      "cadence": "weekly",
+      "mvp_fallback": "manual_json_or_csv_export_from_library_ui"
+    },
+    {
+      "source_id": "meta_ad_library_api_or_ui",
+      "platform": "meta",
+      "access_method": "official_api_or_public_ui",
+      "endpoint": "GET https://graph.facebook.com/{version}/ads_archive",
+      "credential_status": "requires_meta_developer_token_and_ad_library_access_for_api; ui_is_public_but_not_bulk_export",
+      "coverage_notes": "Good for creative copy, snapshot URLs, platforms, page names, active status, countries. Commercial-ad coverage is strongest where transparency rules expose ads; spend/reach is limited for ordinary commercial ads.",
+      "query_keys": ["search_terms", "search_page_ids", "ad_reached_countries", "ad_active_status", "ad_delivery_date_min", "ad_delivery_date_max", "media_type"],
+      "target_fields": [
+        "id",
+        "page_id",
+        "page_name",
+        "ad_delivery_start_time",
+        "ad_delivery_stop_time",
+        "ad_creative_bodies",
+        "ad_creative_link_titles",
+        "ad_creative_link_descriptions",
+        "ad_snapshot_url",
+        "publisher_platforms"
+      ],
+      "cadence": "daily_or_weekly",
+      "mvp_fallback": "manual_page_country_snapshot_or_third_party_export"
+    },
+    {
+      "source_id": "youtube_shorts_search",
+      "platform": "youtube",
+      "access_method": "official_api",
+      "endpoint": "YouTube Data API search/list + videos/list",
+      "credential_status": "requires_google_api_key",
+      "coverage_notes": "Useful as a creator/organic proxy for haul, review, coupon, scam/refund, and competitor comparison videos. Not a direct paid-ad source.",
+      "query_keys": ["q", "publishedAfter", "regionCode", "videoDuration", "order"],
+      "target_fields": ["video_id", "channel_title", "published_at", "title", "description", "view_count", "like_count", "comment_count"],
+      "cadence": "weekly",
+      "mvp_fallback": "manual_url_list_or_existing_video_transcript_tools"
+    }
+  ],
+  "normalized_creative_fields": [
+    "creative_id",
+    "platform",
+    "brand_id",
+    "country",
+    "advertiser_name",
+    "creator_username",
+    "first_seen_at",
+    "last_seen_at",
+    "creative_format",
+    "creative_text",
+    "headline",
+    "landing_url",
+    "snapshot_url",
+    "product_terms",
+    "promotion_terms",
+    "country_terms",
+    "reach_bucket",
+    "source_url"
+  ],
+  "derived_metrics": [
+    "active_creative_count",
+    "new_creative_count_7d",
+    "video_creative_share",
+    "discount_claim_share",
+    "free_shipping_claim_share",
+    "free_gift_claim_share",
+    "category_term_distribution",
+    "country_coverage_count",
+    "competitor_creative_share"
+  ]
+}

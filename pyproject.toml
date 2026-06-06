@@ -24,6 +24,12 @@ dev = [
 
 [project.scripts]
 stock-research = "stock_research.cli:main"
+digital-demand-monitor = "stock_research.alternative_data.digital_demand_monitor.run_monitor:main"
+digital-demand-agent = "stock_research.alternative_data.digital_demand_monitor.run_agent:main"
+temu-product-snapshot = "stock_research.alternative_data.temu_product_intelligence.run_snapshot:main"
+merchant-regulatory-snapshot = "stock_research.alternative_data.merchant_regulatory_monitor.run_snapshot:main"
+product-pricing-policy-collector = "stock_research.alternative_data.collectors.run_product_pricing_policy:main"
+competitor-source-collector = "stock_research.alternative_data.collectors.run_competitor_source:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

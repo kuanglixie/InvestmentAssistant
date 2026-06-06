@@ -68,12 +68,16 @@ def extract_tencent_interim_report_text_facts(text: str, document: dict[str, Any
 
 
 def pdf_text(path: Path) -> str:
+    text_path = path.with_suffix(".txt")
     try:
         from pypdf import PdfReader  # type: ignore[import-not-found]
     except ImportError:
-        return ""
+        return text_path.read_text(encoding="utf-8") if text_path.exists() else ""
     reader = PdfReader(str(path))
-    return "\n".join(page.extract_text() or "" for page in reader.pages)
+    extracted = "\n".join(page.extract_text() or "" for page in reader.pages)
+    if extracted.strip():
+        return extracted
+    return text_path.read_text(encoding="utf-8") if text_path.exists() else ""
 
 
 def _summary_facts(text: str, *, document: dict[str, Any], fiscal_year: int) -> list[dict[str, Any]]:
@@ -191,6 +195,26 @@ def _latest_statement_facts(text: str, *, document: dict[str, Any], fiscal_year:
                 extraction_method="official_tencent_annual_report_financial_position_statement",
                 fact_index=len(facts),
                 interpretation_note="Debt includes current and non-current borrowings plus notes payable.",
+            )
+        )
+
+    investment_portfolio_values = _investment_portfolio_values(text)
+    for year, value in investment_portfolio_values.items():
+        facts.append(
+            _fact(
+                document=document,
+                metric="investment_portfolio",
+                label="Investment portfolio",
+                value=value * MILLION,
+                year=year,
+                unit="CNY",
+                period_type="instant",
+                extraction_method="official_tencent_annual_report_investments_held",
+                fact_index=len(facts),
+                interpretation_note=(
+                    "Tencent reports this investment portfolio under investments in associates and joint ventures, "
+                    "FVPL, and FVOCI. V1 uses the official carrying amount as an operating EV adjustment."
+                ),
             )
         )
 
@@ -487,6 +511,28 @@ def _depreciation_and_amortization_values(text: str) -> dict[int, float]:
         fiscal_year: sum(component[0] for component in components),
         fiscal_year - 1: sum(component[1] for component in components),
     }
+
+
+def _investment_portfolio_values(text: str) -> dict[int, float]:
+    fiscal_year = _fiscal_year_from_text(text)
+    if fiscal_year is None:
+        return {}
+    normalized = _normalize_text(text)
+    match = re.search(
+        r"investment portfolio amounted to approximately RMB\s*([\d,]+)\s*million"
+        r"\s*\(31 December\s+(20\d{2}):\s*RMB\s*([\d,]+)\s*million\)",
+        normalized,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return {}
+    current_value, prior_year, prior_value = match.groups()
+    values = {
+        fiscal_year: float(current_value.replace(",", "")),
+    }
+    if int(prior_year) == fiscal_year - 1:
+        values[fiscal_year - 1] = float(prior_value.replace(",", ""))
+    return values
 
 
 def _financial_position_section(text: str) -> str:

@@ -1,0 +1,8 @@
+collected_at,market,domain,rank,source_name
+2026-05-21T00:00:00Z,US,temu.com,205,fixture_csv
+2026-05-28T00:00:00Z,US,temu.com,174,fixture_csv
+2026-05-21T00:00:00Z,US,shein.com,188,fixture_csv
+2026-05-28T00:00:00Z,US,shein.com,190,fixture_csv
+2026-05-21T00:00:00Z,US,aliexpress.com,150,fixture_csv
+2026-05-28T00:00:00Z,US,aliexpress.com,153,fixture_csv
+

@@ -1,0 +1,450 @@
+{
+  "schema_version": 1,
+  "company_id": "pdd",
+  "status": "business_model_source_coverage_v1",
+  "scope": "Priority source coverage for the Business Model Evidence Agent MVP. This registry connects the three main gaps: merchant/platform policy, competitor filings/product-pricing, and investor materials, plus the next easy-to-connect sources for regulatory trade risk, customer policy, app-store demand quality, and paid-acquisition intensity.",
+  "source_groups": [
+    {
+      "group_id": "merchant_platform_policy",
+      "name": "Merchant fee / seller terms / platform policy",
+      "priority": "P1",
+      "status": "connected_registry_ready",
+      "reliability": "high_for_policy_facts",
+      "business_model_questions": ["Q2", "Q5", "Q6", "Q7"],
+      "evidence_role": "Test merchant obligations, seller onboarding, platform rules, ads/traffic economics, logistics/returns burden, and whether low prices depend on subsidy or seller pressure.",
+      "collector_status": "ready_for_manual_or_web_reader_collection",
+      "source_targets": [
+        {
+          "source_id": "temu_seller_center",
+          "name": "Temu Seller Center",
+          "source_type": "official_seller_page",
+          "url": "https://seller.temu.com/",
+          "reliability": "high_for_product_and_policy_facts",
+          "current_known_coverage": "Seller onboarding, local seller registration, logistics and returns feature area, product ads feature area, seller support language.",
+          "collection_method": "web_reader_public_page_or_manual_snapshot",
+          "citation_hint": "Capture page URL, retrieval date, visible section heading, and exact excerpt.",
+          "limits": "Some policy details may require seller login. Do not infer fee burden from marketing copy alone."
+        },
+        {
+          "source_id": "temu_seller_privacy_policy",
+          "name": "Temu Seller Privacy Policy",
+          "source_type": "official_policy_page",
+          "url": "https://seller.temu.com/",
+          "reliability": "high_for_policy_facts",
+          "current_known_coverage": "Seller data/privacy policy linked from Seller Center onboarding page.",
+          "collection_method": "follow_official_link_or_manual_snapshot",
+          "citation_hint": "Preserve the exact policy URL after following the official link.",
+          "limits": "Privacy policy informs data/compliance risk but does not prove merchant profitability."
+        },
+        {
+          "source_id": "temu_merchant_terms_locator",
+          "name": "Temu merchant terms, fees, returns, logistics, and ads rules",
+          "source_type": "official_policy_search_locator",
+          "locator_type": "search_query",
+          "locator": "site:seller.temu.com Temu seller fees returns logistics product ads policy",
+          "reliability": "high_for_policy_facts_when_official_page",
+          "collection_method": "official_search_locator_then_manual_snapshot",
+          "citation_hint": "Use only official Temu/Seller Center pages for core policy evidence.",
+          "limits": "Search results from blogs or seller guides are lower-tier context unless independently verified."
+        }
+      ],
+      "output_expectations": [
+        "merchant_cost_obligations",
+        "seller_onboarding_requirements",
+        "returns_and_logistics_burden",
+        "ads_or_traffic_product_terms",
+        "policy_fragility_points"
+      ]
+    },
+    {
+      "group_id": "official_customer_policy",
+      "name": "Official customer shipping, returns, refund, and buyer-protection policy",
+      "priority": "P1",
+      "status": "connected_registry_ready",
+      "reliability": "high_for_policy_facts",
+      "business_model_questions": ["Q2", "Q3", "Q5", "Q6", "Q7"],
+      "evidence_role": "Test the customer promise, delivery/refund friction, buyer-protection burden, and whether generous policies create structural logistics or returns costs.",
+      "collector_status": "ready_for_web_reader_public_page_collection",
+      "source_targets": [
+        {
+          "source_id": "temu_support_policies",
+          "name": "Temu official policies page",
+          "source_type": "official_customer_policy_page",
+          "url": "https://www.temu.com/support/c2/policies-f-60.html",
+          "reliability": "high_for_policy_facts",
+          "collection_method": "web_reader_public_page_or_manual_snapshot",
+          "citation_hint": "Capture page URL, retrieval date, policy heading, eligibility window, fee language, and exact excerpt.",
+          "limits": "Official customer policy defines customer-facing obligations but does not prove actual customer satisfaction or seller economics."
+        },
+        {
+          "source_id": "temu_support_shipping_returns",
+          "name": "Temu official shipping and returns support page",
+          "source_type": "official_customer_policy_page",
+          "url": "https://www.temu.com/support/c2/shipping-f-2.html",
+          "reliability": "high_for_policy_facts",
+          "collection_method": "web_reader_public_page_or_manual_snapshot",
+          "citation_hint": "Capture shipping promise, return/refund process, fees, excluded categories, and policy-update date when visible.",
+          "limits": "Support pages can change by country, logged-in state, and order context; country and retrieval date must be preserved."
+        }
+      ],
+      "output_expectations": [
+        "customer_delivery_promise",
+        "return_refund_policy_burden",
+        "buyer_protection_obligations",
+        "customer_policy_fragility_points"
+      ]
+    },
+    {
+      "group_id": "regulatory_trade_policy",
+      "name": "Regulatory, customs, de minimis, consumer-protection, and product-safety sources",
+      "priority": "P1",
+      "status": "connected_registry_ready",
+      "reliability": "high_for_rule_or_enforcement_facts",
+      "business_model_questions": ["Q5", "Q6", "Q7", "Q8", "Q9"],
+      "evidence_role": "Test whether cross-border low-price economics, product-safety obligations, data/privacy rules, consumer-protection enforcement, or marketplace transparency rules can weaken the model.",
+      "collector_status": "ready_for_official_page_collection",
+      "source_targets": [
+        {
+          "source_id": "cbp_ecommerce_de_minimis",
+          "name": "U.S. CBP e-commerce and de minimis guidance",
+          "source_type": "government_trade_policy_page",
+          "url": "https://www.cbp.gov/trade/basic-import-export/e-commerce",
+          "reliability": "high_for_rule_facts",
+          "collection_method": "official_page_snapshot",
+          "citation_hint": "Capture rule/program name, publication/update date, shipment threshold language, enforcement context, and URL.",
+          "limits": "CBP pages explain rules and enforcement context; company-specific impact requires separate financial and operational evidence."
+        },
+        {
+          "source_id": "cbp_section_321_programs",
+          "name": "U.S. CBP Section 321 programs",
+          "source_type": "government_trade_policy_page",
+          "url": "https://www.cbp.gov/trade/trade-enforcement/tftea/section-321-programs",
+          "reliability": "high_for_rule_facts",
+          "collection_method": "official_page_snapshot",
+          "citation_hint": "Capture Section 321 / de minimis eligibility, data requirements, pilot/program details, and update date.",
+          "limits": "This source supports the trade-policy rule base, not Temu-specific unit economics by itself."
+        },
+        {
+          "source_id": "ftc_temu_inform_act",
+          "name": "FTC Temu INFORM Consumers Act enforcement source",
+          "source_type": "government_consumer_protection_enforcement",
+          "url": "https://www.ftc.gov/news-events/news/press-releases/2025/09/online-marketplace-temu-pay-2-million-penalty-alleged-inform-act-violations",
+          "reliability": "high_for_enforcement_facts",
+          "collection_method": "official_page_snapshot",
+          "citation_hint": "Capture case name, statute, allegation category, order/penalty status, date, and required marketplace disclosures.",
+          "limits": "Enforcement facts show regulatory fragility; they do not quantify business impact unless linked to financial or operating evidence."
+        },
+        {
+          "source_id": "eu_dsa_temu_vlop",
+          "name": "European Commission Temu DSA / VLOP source",
+          "source_type": "regulator_platform_obligation_page",
+          "url": "https://digital-strategy.ec.europa.eu/en/news/commission-designates-temu-very-large-online-platform-under-digital-services-act",
+          "reliability": "high_for_regulatory_status_facts",
+          "collection_method": "official_page_snapshot",
+          "citation_hint": "Capture DSA status, designation date, obligations, investigation/enforcement status when available, and URL.",
+          "limits": "Use current official Commission pages for enforcement updates; media articles are context only."
+        },
+        {
+          "source_id": "uscc_temu_shein_trade_loopholes",
+          "name": "USCC issue brief on Shein, Temu, and Chinese e-commerce",
+          "source_type": "government_policy_research",
+          "url": "https://www.uscc.gov/sites/default/files/2023-04/Issue_Brief-Shein_Temu_and_Chinese_E-Commerce.pdf",
+          "reliability": "medium_high_for_policy_context",
+          "collection_method": "official_pdf_snapshot",
+          "citation_hint": "Capture publication date, policy-risk category, and exact page number.",
+          "limits": "Government policy research can frame risk but should be separated from binding rules or company-specific disclosures."
+        }
+      ],
+      "output_expectations": [
+        "trade_policy_fragility_points",
+        "marketplace_enforcement_events",
+        "product_safety_and_illegal_goods_risk",
+        "data_privacy_and_transparency_obligations",
+        "questions_for_risk_agent"
+      ]
+    },
+    {
+      "group_id": "competitor_official_filings",
+      "name": "Competitor filings and official reports",
+      "priority": "P2",
+      "status": "connected_registry_ready",
+      "reliability": "medium_high",
+      "business_model_questions": ["Q1", "Q4", "Q5", "Q7", "Q9"],
+      "evidence_role": "Compare PDD/Temu against official competitor business models, marketplace economics, logistics/capital intensity, merchant services, and copyability.",
+      "collector_status": "ready_for_sec_or_ir_download_pipeline",
+      "source_targets": [
+        {
+          "source_id": "alibaba_official_financial_reports",
+          "name": "Alibaba Group official financial reports",
+          "source_type": "competitor_filing_or_ir_report",
+          "url": "https://home.alibabagroup.com/en-US/ir-financial-reports-financial-results",
+          "reliability": "medium_high",
+          "competitor": "Alibaba",
+          "collection_method": "official_ir_download_or_manual_pdf_snapshot",
+          "citation_hint": "Use annual report, interim report, business segment, revenue recognition, and risk sections.",
+          "limits": "Alibaba has multiple businesses; isolate Taobao/Tmall, AliExpress, Cainiao, and international commerce where possible."
+        },
+        {
+          "source_id": "jd_official_annual_reports",
+          "name": "JD.com official annual reports",
+          "source_type": "competitor_filing_or_ir_report",
+          "url": "https://ir.jd.com/annual-reports",
+          "reliability": "medium_high",
+          "competitor": "JD.com",
+          "collection_method": "official_ir_download_or_manual_pdf_snapshot",
+          "citation_hint": "Use JD Retail, marketplace, logistics, fulfillment, and risk sections.",
+          "limits": "JD has a heavier first-party/logistics model; compare model differences rather than forcing one-to-one metrics."
+        },
+        {
+          "source_id": "amazon_ir_reports",
+          "name": "Amazon official reports / investor-relations filing links",
+          "source_type": "competitor_filing_or_ir_report",
+          "url": "https://www.aboutamazon.com/about-us/amazon-reports",
+          "reliability": "medium_high",
+          "competitor": "Amazon",
+          "collection_method": "official_ir_or_sec_filing_download",
+          "citation_hint": "Use third-party seller services, fulfillment, advertising, subscription, international, and risk sections.",
+          "limits": "Amazon is broader than Temu/PDD; compare marketplace, fulfillment, advertising, and seller-policy mechanics."
+        },
+        {
+          "source_id": "shein_official_materials_locator",
+          "name": "Shein official materials and public filing candidates",
+          "source_type": "competitor_official_or_public_material_locator",
+          "locator_type": "search_query",
+          "locator": "Shein official annual report investor relations IPO filing marketplace supplier model",
+          "reliability": "medium_or_low_until_official_filing_available",
+          "competitor": "SHEIN",
+          "collection_method": "official_or_regulator_source_locator",
+          "citation_hint": "Prefer official/regulator filings over media because SHEIN is private and disclosure may be limited.",
+          "limits": "Private-company evidence is lower coverage and must be labeled carefully."
+        }
+      ],
+      "output_expectations": [
+        "competitor_revenue_model_map",
+        "competitor_cost_structure_map",
+        "competitor_logistics_and_capital_intensity",
+        "copyability_tests",
+        "relative_moat_hypotheses"
+      ]
+    },
+    {
+      "group_id": "competitor_product_pricing",
+      "name": "Competitor product and pricing surfaces",
+      "priority": "P2",
+      "status": "connected_registry_ready",
+      "reliability": "medium_high_for_visible_product_facts",
+      "business_model_questions": ["Q3", "Q4", "Q5", "Q6", "Q7"],
+      "evidence_role": "Compare visible price, discounting, couponing, delivery, seller terms, and customer proposition across Temu alternatives.",
+      "collector_status": "ready_for_fixed_basket_extension",
+      "source_targets": [
+        {
+          "source_id": "temu_product_intelligence_extension",
+          "name": "Extend Temu product intelligence fixed basket to competitors",
+          "source_type": "product_page_or_pricing_page",
+          "local_prototype_path": "src/stock_research/alternative_data/temu_product_intelligence/",
+          "reliability": "medium_high_for_visible_product_facts",
+          "collection_method": "fixed_basket_playwright_or_manual_snapshot",
+          "citation_hint": "Preserve URL, retrieval date, product title, price, discount, seller, shipping, delivery, review count, and parser metadata.",
+          "limits": "Fixed basket must remain stable; broad scraping is out of scope."
+        },
+        {
+          "source_id": "amazon_competitor_basket_locator",
+          "name": "Amazon comparable product basket",
+          "source_type": "competitor_product_page_locator",
+          "locator_type": "manual_basket",
+          "locator": "Amazon low-price home goods, electronics accessories, fashion accessories comparable to Temu baskets",
+          "reliability": "medium_high_for_visible_product_facts",
+          "competitor": "Amazon",
+          "collection_method": "manual_fixed_basket_then_snapshot",
+          "limits": "Amazon prices and delivery promises can vary by location, account, Prime status, and seller."
+        },
+        {
+          "source_id": "aliexpress_competitor_basket_locator",
+          "name": "AliExpress comparable product basket",
+          "source_type": "competitor_product_page_locator",
+          "locator_type": "manual_basket",
+          "locator": "AliExpress low-price home goods electronics accessories fashion accessories comparable to Temu baskets",
+          "reliability": "medium_high_for_visible_product_facts",
+          "competitor": "AliExpress",
+          "collection_method": "manual_fixed_basket_then_snapshot",
+          "limits": "Shipping, customs, and seller terms can vary materially across listings."
+        },
+        {
+          "source_id": "shein_competitor_basket_locator",
+          "name": "SHEIN comparable product basket",
+          "source_type": "competitor_product_page_locator",
+          "locator_type": "manual_basket",
+          "locator": "SHEIN low-price fashion accessories home goods comparable to Temu baskets",
+          "reliability": "medium_high_for_visible_product_facts",
+          "competitor": "SHEIN",
+          "collection_method": "manual_fixed_basket_then_snapshot",
+          "limits": "Fashion assortment turns quickly, so fixed-basket comparability must be reviewed."
+        }
+      ],
+      "output_expectations": [
+        "visible_price_position",
+        "promotion_intensity_comparison",
+        "delivery_and_shipping_comparison",
+        "product_quality_proxy_comparison",
+        "subsidy_or_discount_dependency_tests"
+      ]
+    },
+    {
+      "group_id": "app_store_demand_quality",
+      "name": "App-store ranking, rating, review volume, and review-topic evidence",
+      "priority": "P2",
+      "status": "connected_registry_ready",
+      "reliability": "medium_for_demand_quality_patterns",
+      "business_model_questions": ["Q3", "Q4", "Q6", "Q7", "Q8"],
+      "evidence_role": "Test whether customer adoption, review volume, rating quality, refund/shipping/product-quality complaints, and repeat-use clues support the business model.",
+      "collector_status": "integrated_package_ready",
+      "source_targets": [
+        {
+          "source_id": "apple_app_store_temu",
+          "name": "Apple App Store Temu page",
+          "source_type": "official_app_store_page",
+          "url": "https://apps.apple.com/us/app/1641486558?platform=iphone",
+          "reliability": "medium_for_visible_app_facts",
+          "collection_method": "official_app_store_snapshot_or_existing_app_store_connector",
+          "local_prototype_path": "src/stock_research/alternative_data/digital_demand_monitor/",
+          "citation_hint": "Preserve country, app id, rank/category when available, rating, review count, visible review date, and URL.",
+          "limits": "Ratings and review snippets are app-level signals with sampling, country, and platform bias."
+        },
+        {
+          "source_id": "google_play_temu",
+          "name": "Google Play Temu page",
+          "source_type": "official_app_store_page",
+          "url": "https://play.google.com/store/apps/details?id=com.einnovation.temu&gl=US",
+          "reliability": "medium_for_visible_app_facts",
+          "collection_method": "official_app_store_snapshot_or_visible_review_parser",
+          "local_prototype_path": "src/stock_research/alternative_data/digital_demand_monitor/",
+          "citation_hint": "Preserve country, app id, rating, installs/review count when visible, visible review text metadata, and URL.",
+          "limits": "Visible Google Play reviews are partial and can vary by location, device, language, and logged-in state."
+        },
+        {
+          "source_id": "main_app_store_connector",
+          "name": "Main alternative-data app-store connector",
+          "source_type": "alternative_data_connector",
+          "local_prototype_path": "src/stock_research/alternative_data/connectors/app_store_connector.py",
+          "reliability": "medium_for_normalized_app_metrics",
+          "collection_method": "seed_observation_normalizer_or_future_live_snapshot",
+          "citation_hint": "Preserve raw seed/source URL and normalized metric metadata.",
+          "limits": "V1 connector normalizes cached/seed observations; live collection is still pending."
+        }
+      ],
+      "output_expectations": [
+        "app_rank_and_review_volume_signals",
+        "rating_quality_signal",
+        "refund_shipping_quality_review_topics",
+        "customer_happiness_cross_check",
+        "demand_quality_fragility_points"
+      ]
+    },
+    {
+      "group_id": "paid_acquisition_and_promotion_signals",
+      "name": "Paid acquisition, promotion intensity, search, web-rank, and coupon signals",
+      "priority": "P2",
+      "status": "connected_registry_ready",
+      "reliability": "medium_or_low_for_growth_quality_patterns",
+      "business_model_questions": ["Q3", "Q4", "Q6", "Q8", "Q9"],
+      "evidence_role": "Test whether growth is organic, promotion-driven, ad-driven, or subsidy-heavy, and whether competitor pressure is forcing paid acquisition.",
+      "collector_status": "integrated_package_ready",
+      "source_targets": [
+        {
+          "source_id": "digital_demand_monitor_paid_ads",
+          "name": "PDD digital demand monitor paid-ad and promotion signals",
+          "source_type": "alternative_data_prototype",
+          "local_prototype_path": "src/stock_research/alternative_data/digital_demand_monitor/",
+          "reliability": "medium_or_low_for_pattern_evidence",
+          "collection_method": "prototype_snapshot_then_normalized_metrics",
+          "citation_hint": "Preserve market, source type, brand id, metric name, current value, trend window, and raw artifact path.",
+          "limits": "Paid-ad libraries and coupon surfaces are directional; they do not directly prove CAC or unit economics."
+        },
+        {
+          "source_id": "google_ads_transparency_locator",
+          "name": "Google Ads Transparency Center locator for Temu and competitors",
+          "source_type": "paid_ad_transparency_locator",
+          "locator_type": "search_query",
+          "locator": "Google Ads Transparency Center Temu SHEIN AliExpress Amazon ads",
+          "reliability": "medium_or_low_for_visible_ad_patterns",
+          "collection_method": "official_ad_transparency_page_or_manual_snapshot",
+          "citation_hint": "Preserve advertiser identity, region, visible ad count/card sample, retrieval date, and URL.",
+          "limits": "Public ad counts are incomplete and may not map cleanly to spend."
+        },
+        {
+          "source_id": "google_trends_search_connector",
+          "name": "Main alternative-data Google Trends connector",
+          "source_type": "alternative_data_connector",
+          "local_prototype_path": "src/stock_research/alternative_data/connectors/google_trends_connector.py",
+          "reliability": "medium_or_low_for_search_interest_patterns",
+          "collection_method": "seed_observation_normalizer_or_future_live_snapshot",
+          "citation_hint": "Preserve search terms, region, date window, and raw source metadata.",
+          "limits": "Search interest is relative and not the same as revenue or active buyers."
+        }
+      ],
+      "output_expectations": [
+        "paid_acquisition_intensity_signal",
+        "promotion_or_coupon_dependency_signal",
+        "search_and_web_demand_cross_check",
+        "competitor_ad_pressure_signal",
+        "questions_for_growth_runway_agent"
+      ]
+    },
+    {
+      "group_id": "investor_presentations_and_events",
+      "name": "Investor presentations and investor events",
+      "priority": "P2",
+      "status": "connected_registry_ready",
+      "reliability": "medium",
+      "business_model_questions": ["Q1", "Q3", "Q4", "Q5", "Q8", "Q9"],
+      "evidence_role": "Capture management framing, KPI narrative, strategy changes, margin-investment explanations, and webcast/event materials.",
+      "collector_status": "ready_for_local_or_ir_page_ingestion",
+      "source_targets": [
+        {
+          "source_id": "pdd_quarterly_results_page",
+          "name": "PDD quarterly results page",
+          "source_type": "investor_relations_event_page",
+          "url": "https://investor.pddholdings.com/financial-information/quarterly-results/",
+          "reliability": "medium",
+          "collection_method": "official_ir_page_download_then_link_extract",
+          "citation_hint": "Extract earnings releases, webcast links, and any visible presentation entries by quarter.",
+          "limits": "Management communication is evidence of framing, not proof of economics."
+        },
+        {
+          "source_id": "pdd_presentations_page",
+          "name": "PDD presentations page",
+          "source_type": "investor_presentation_page",
+          "url": "https://pinduoduo.gcs-web.com/events-and-presentations/presentations",
+          "reliability": "medium",
+          "collection_method": "official_ir_page_download_or_manual_snapshot",
+          "citation_hint": "Preserve deck URL, date, event name, and slide/page locator.",
+          "limits": "If no presentation is available, record `not_disclosed` rather than guessing from earnings releases."
+        },
+        {
+          "source_id": "local_investor_deck_intake",
+          "name": "Local investor presentation / investor day deck intake",
+          "source_type": "local_investor_presentation",
+          "local_path_glob": "data/raw/investor_presentations/pdd/**/*",
+          "reliability": "medium",
+          "collection_method": "manual_pdf_or_text_ingestion",
+          "citation_hint": "Preserve file path, page number if available, slide title, and excerpt.",
+          "limits": "Local files need source URL/provider/license metadata before use outside the system."
+        }
+      ],
+      "output_expectations": [
+        "management_business_model_framing",
+        "growth_driver_narrative",
+        "margin_investment_narrative",
+        "kpi_narrative_changes",
+        "questions_for_management_agent"
+      ]
+    }
+  ],
+  "coverage_policy": [
+    "Core business-model claims require P0/P1 sources.",
+    "Management materials are medium-reliability framing and must be cross-checked against official filings and financial evidence.",
+    "Competitor materials should prefer official filings and official IR pages before media commentary.",
+    "Product/pricing surfaces must use stable fixed baskets or clearly labeled manual snapshots.",
+    "If a target is login-gated or unavailable, record the missing source and do not infer the policy."
+  ]
+}

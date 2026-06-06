@@ -1,0 +1,13 @@
+{
+  "headless": true,
+  "timeout_ms": 45000,
+  "wait_until": "domcontentloaded",
+  "post_load_wait_ms": 5000,
+  "scroll_steps": 5,
+  "scroll_wait_ms": 900,
+  "min_delay_seconds": 5.0,
+  "max_retries": 1,
+  "chrome_executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "node_executable_path": "/Users/ajing/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+  "node_modules_path": "/Users/ajing/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules"
+}

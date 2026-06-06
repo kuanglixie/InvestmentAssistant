@@ -1,0 +1,14 @@
+{
+  "brand": "Temu",
+  "company": "PDD",
+  "region": "US",
+  "currency": "USD",
+  "products": [
+    {
+      "tracking_id": "temu_live_fashion_001",
+      "category": "fashion_accessories",
+      "url": "https://www.temu.com/ca/sneakers-womens-lightweight-and-comfortable-slip-on-casual-shoes-lightweight-breathable-and-comfortable-suitable-for-daily-walking-and-leisure-g-601105595019017.html",
+      "notes": "Direct real Temu product URL discovered from the embedded product card in the live page."
+    }
+  ]
+}

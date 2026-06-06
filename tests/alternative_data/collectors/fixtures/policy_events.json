@@ -1,0 +1,22 @@
+[
+  {
+    "event_id": "policy_1",
+    "source_group": "merchant_platform_policy",
+    "source_id": "temu_seller_center",
+    "source_type": "public_html",
+    "title": "Seller return policy",
+    "topic": "returns_refunds",
+    "severity": "medium",
+    "evidence_excerpt": "Refund and return disputes may affect seller performance."
+  },
+  {
+    "event_id": "policy_2",
+    "source_group": "merchant_platform_policy",
+    "source_id": "temu_seller_center",
+    "source_type": "public_html",
+    "title": "Seller payout policy",
+    "topic": "payout_cashflow",
+    "severity": "high",
+    "evidence_excerpt": "Payout settlement timing may change when risk reserves or policy violations are detected."
+  }
+]

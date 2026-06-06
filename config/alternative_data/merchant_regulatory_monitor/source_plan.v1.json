@@ -1,0 +1,160 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-06-02",
+  "monitor": "merchant_regulatory_monitor",
+  "company": "PDD",
+  "brand": "Temu",
+  "purpose": "Track merchant economics, seller platform rules, product-safety events, and trade/regulatory pressure that can change Temu's growth quality or cost structure.",
+  "source_groups": [
+    {
+      "source_group": "merchant_platform_policy",
+      "priority": "high",
+      "investment_use": "Detect changes in seller fees, return obligations, fulfillment promises, product ads, onboarding, penalties, and payout timing."
+    },
+    {
+      "source_group": "merchant_voice",
+      "priority": "medium",
+      "investment_use": "Detect seller pain points and early complaints before official policy pages become easy to parse."
+    },
+    {
+      "source_group": "regulatory_product_safety",
+      "priority": "high",
+      "investment_use": "Detect recalls, unsafe product themes, and product-category risks that could hurt trust, conversion, or compliance cost."
+    },
+    {
+      "source_group": "regulatory_trade_policy",
+      "priority": "high",
+      "investment_use": "Track de minimis, Section 321, tariff, customs, and cross-border logistics rule changes."
+    },
+    {
+      "source_group": "regulatory_consumer_protection",
+      "priority": "high",
+      "investment_use": "Track marketplace accountability, INFORM Act, DSA, dark-pattern, illegal-product, and trader-traceability pressure."
+    }
+  ],
+  "sources": [
+    {
+      "source_id": "temu_seller_center_public",
+      "source_group": "merchant_platform_policy",
+      "source_type": "public_html",
+      "access_method": "public_page_snapshot",
+      "url": "https://seller.temu.com/",
+      "credential_status": "none_for_public_landing; login_required_for_full_policy_detail",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["ads_traffic", "logistics_fulfillment", "returns_refunds", "seller_fees", "payout_cashflow", "penalties_enforcement"],
+      "caveats": "The most valuable seller-console details may require a seller login or approved merchant account."
+    },
+    {
+      "source_id": "temu_seller_center_regional_public_pages",
+      "source_group": "merchant_platform_policy",
+      "source_type": "public_html",
+      "access_method": "public_page_snapshot",
+      "url_patterns": [
+        "https://*.seller.temu.com/",
+        "https://www.temumarketplace.*"
+      ],
+      "credential_status": "none_for_public_landing; region coverage varies",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["ads_traffic", "logistics_fulfillment", "merchant_profitability"],
+      "caveats": "Useful for regional seller expansion signals, but content can be marketing-heavy."
+    },
+    {
+      "source_id": "reddit_temu_seller_voice",
+      "source_group": "merchant_voice",
+      "source_type": "public_forum",
+      "access_method": "existing_reddit_connector_or_manual_export",
+      "queries": [
+        "Temu seller payout",
+        "Temu seller return refund",
+        "Temu merchant fee",
+        "Temu seller verification",
+        "Temu product ads seller"
+      ],
+      "credential_status": "use Reddit API where configured; otherwise manual fixture import",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["payout_cashflow", "returns_refunds", "seller_fees", "penalties_enforcement"],
+      "caveats": "Low-confidence voice data. Use as lead generation, not as primary evidence."
+    },
+    {
+      "source_id": "cpsc_recalls_api",
+      "source_group": "regulatory_product_safety",
+      "source_type": "official_api",
+      "access_method": "rest_json",
+      "url_template": "https://www.saferproducts.gov/RestWebServices/Recall?format=json&RecallTitle={query}",
+      "documentation_url": "https://www.cpsc.gov/Recalls/CPSC-Recalls-Application-Program-Interface-API-Information",
+      "credential_status": "none",
+      "refresh_cadence": "daily",
+      "normalized_topics": ["product_safety", "counterfeit_illegal_goods"],
+      "caveats": "Query by marketplace name may miss recalls where the seller or importer is named but Temu is not."
+    },
+    {
+      "source_id": "eu_safety_gate",
+      "source_group": "regulatory_product_safety",
+      "source_type": "official_public_portal",
+      "access_method": "portal_snapshot_or_export",
+      "url": "https://ec.europa.eu/safety-gate/",
+      "credential_status": "none_for_public_portal",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["product_safety", "counterfeit_illegal_goods"],
+      "caveats": "Public portal access is reliable for review, but an official bulk API path must be validated before production ingestion."
+    },
+    {
+      "source_id": "cbp_section_321_programs",
+      "source_group": "regulatory_trade_policy",
+      "source_type": "official_public_page",
+      "access_method": "public_page_snapshot",
+      "url": "https://www.cbp.gov/trade/trade-enforcement/tftea/section-321-programs",
+      "credential_status": "none",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["customs_de_minimis", "logistics_fulfillment"],
+      "caveats": "Tracks policy and program changes, not company-specific shipment volume."
+    },
+    {
+      "source_id": "cbp_trade_statistics",
+      "source_group": "regulatory_trade_policy",
+      "source_type": "official_public_table",
+      "access_method": "public_page_snapshot",
+      "url": "https://www.cbp.gov/newsroom/stats/trade",
+      "credential_status": "none",
+      "refresh_cadence": "monthly",
+      "normalized_topics": ["customs_de_minimis"],
+      "caveats": "Good for macro de minimis context, not Temu-specific."
+    },
+    {
+      "source_id": "ftc_temu_inform_act",
+      "source_group": "regulatory_consumer_protection",
+      "source_type": "official_public_page",
+      "access_method": "public_page_snapshot",
+      "url": "https://www.ftc.gov/news-events/news/press-releases/2025/09/online-marketplace-temu-pay-2-million-penalty-alleged-inform-act-violations",
+      "credential_status": "none",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["consumer_protection", "counterfeit_illegal_goods", "penalties_enforcement"],
+      "caveats": "Event-specific official page. Add FTC case pages and press searches for ongoing monitoring."
+    },
+    {
+      "source_id": "eu_dsa_temu_case",
+      "source_group": "regulatory_consumer_protection",
+      "source_type": "official_public_page",
+      "access_method": "public_page_snapshot",
+      "url": "https://digital-strategy.ec.europa.eu/en/news/commission-designates-temu-very-large-online-platform-under-digital-services-act",
+      "related_urls": [
+        "https://digital-strategy.ec.europa.eu/en/news/commission-preliminarily-finds-temu-breach-digital-services-act-relation-illegal-products-its"
+      ],
+      "credential_status": "none",
+      "refresh_cadence": "weekly",
+      "normalized_topics": ["dsa_platform_obligations", "consumer_protection", "counterfeit_illegal_goods"],
+      "caveats": "Use European Commission pages as source of record; media coverage can be used only as a lead."
+    }
+  ],
+  "mvp_outputs": [
+    "merchant_regulatory_events.json",
+    "merchant_regulatory_summary.json",
+    "merchant_regulatory_summary.md"
+  ],
+  "questions_answered": [
+    "Are merchant economics tightening through platform rules, returns, seller fees, payout timing, or penalties?",
+    "Is Temu leaning more on seller-funded ads, coupons, or fulfillment obligations to sustain growth?",
+    "Are unsafe products, illegal goods, or consumer-protection issues increasing?",
+    "Could de minimis, customs, tariff, or DSA rules impair Temu's cross-border model?"
+  ]
+}

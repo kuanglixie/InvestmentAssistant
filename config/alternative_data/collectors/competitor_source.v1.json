@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "collector_id": "competitor_source_v1",
+  "scope": "competitor_comparison",
+  "company": "PDD",
+  "brand": "Temu",
+  "purpose": "Collect and summarize competitor product, policy, and official-source evidence for comparison against Temu.",
+  "primary_questions": [
+    "Is Temu cheaper than comparable baskets at SHEIN, AliExpress, Amazon, Walmart, or TikTok Shop?",
+    "Does Temu have a delivery-promise advantage or disadvantage?",
+    "Are competitors copying or emphasizing similar price, promotion, logistics, marketplace, seller, or ad levers?",
+    "Are regulatory and compliance risks Temu-specific or visible across competitors?"
+  ],
+  "accepted_inputs": [
+    {
+      "name": "target_product_snapshots",
+      "default_path": "data/alternative_data/temu_product_intelligence/latest/latest_snapshots.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence",
+      "required_for": ["target-side price and delivery baseline"]
+    },
+    {
+      "name": "competitor_product_snapshots",
+      "default_path": "data/alternative_data/temu_product_intelligence/competitors/latest_snapshots.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence using competitor basket configs",
+      "required_for": ["relative price gap and relative delivery gap"]
+    },
+    {
+      "name": "competitor_source_text_records",
+      "default_path": "data/alternative_data/collectors/competitor_source/source_text_records.json",
+      "source": "filings, policy pages, product pages, seller terms, or manual exports",
+      "required_for": ["competitor strategy, policy, and regulatory-risk topic events"]
+    }
+  ],
+  "source_priorities": [
+    "Official filings and annual reports",
+    "Official policy, shipping, return, seller, or marketplace pages",
+    "Fixed competitor product basket snapshots",
+    "Manual exports from public pages when live access is brittle"
+  ],
+  "outputs": [
+    "competitor_source_pack.json",
+    "competitor_source_report.md"
+  ],
+  "finding_ids": [
+    "relative_price_position",
+    "relative_delivery_position",
+    "competitor_strategy_overlap",
+    "competitor_regulatory_context",
+    "competitor_source_no_v1_threshold"
+  ]
+}

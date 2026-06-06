@@ -1,0 +1,38 @@
+[
+  {
+    "snapshot_id": "amazon_kitchen_1",
+    "product_tracking_id": "amazon_kitchen_001",
+    "url": "https://www.amazon.com/dp/example",
+    "category": "kitchen",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "Amazon kitchen item",
+    "price": 18.0,
+    "discount_pct": 12.0,
+    "delivery_max_days": 3,
+    "parse_success": true
+  },
+  {
+    "snapshot_id": "amazon_kitchen_2",
+    "product_tracking_id": "amazon_kitchen_002",
+    "url": "https://www.amazon.com/dp/example2",
+    "category": "kitchen",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "Amazon kitchen item 2",
+    "price": 20.0,
+    "discount_pct": 8.0,
+    "delivery_max_days": 2,
+    "parse_success": true
+  },
+  {
+    "snapshot_id": "shein_home_1",
+    "product_tracking_id": "shein_home_goods_001",
+    "url": "https://us.shein.com/example.html",
+    "category": "home_goods",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "SHEIN home item",
+    "price": 12.0,
+    "discount_pct": 25.0,
+    "delivery_max_days": 9,
+    "parse_success": true
+  }
+]

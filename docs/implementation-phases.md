@@ -1,5 +1,8 @@
 # Implementation Phases
 
+> Status: Archived historical planning note.
+> This document is retained for context, but it should not be used as the primary design source. Current active references are `docs/financial-results-report-methodology-v1.md`, `docs/metrics-formula-requirements-v1.md`, `docs/human-involved-decision-points.md`, `docs/technical-architecture-v1.md`, and `docs/agent-improvement-backlog.md`.
+
 ## Phase 1: Runnable Scaffold
 
 Status: done.

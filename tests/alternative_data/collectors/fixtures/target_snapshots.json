@@ -1,0 +1,38 @@
+[
+  {
+    "snapshot_id": "temu_kitchen_1",
+    "product_tracking_id": "temu_kitchen_001",
+    "url": "https://www.temu.com/example-1.html",
+    "category": "kitchen",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "Temu kitchen item",
+    "price": 9.0,
+    "discount_pct": 55.0,
+    "delivery_max_days": 11,
+    "parse_success": true
+  },
+  {
+    "snapshot_id": "temu_kitchen_2",
+    "product_tracking_id": "temu_kitchen_002",
+    "url": "https://www.temu.com/example-2.html",
+    "category": "kitchen",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "Temu kitchen item 2",
+    "price": 11.0,
+    "discount_pct": 60.0,
+    "delivery_max_days": 10,
+    "parse_success": true
+  },
+  {
+    "snapshot_id": "temu_home_1",
+    "product_tracking_id": "temu_home_001",
+    "url": "https://www.temu.com/example-3.html",
+    "category": "home_goods",
+    "collected_at": "2026-06-02T00:00:00Z",
+    "title": "Temu home item",
+    "price": 8.0,
+    "discount_pct": 65.0,
+    "delivery_max_days": 12,
+    "parse_success": true
+  }
+]

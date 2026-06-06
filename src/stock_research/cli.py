@@ -8,13 +8,54 @@ from typing import Any
 
 from stock_research.env import load_dotenv
 from stock_research.alternative_data import collect_alternative_data_signals
+from stock_research.comparator_evidence import run_comparator_evidence_pipeline
+from stock_research.diagnostics import run_v1_financial_diagnostics
+from stock_research.evidence_communication import (
+    build_evidence_communication_pack,
+    build_evidence_communication_report,
+)
+from stock_research.feedback_loop import (
+    apply_feedback_to_layer1_question_pack,
+    build_feedback_loop_pack,
+    build_feedback_loop_report,
+)
+from stock_research.extraction.xbrl import extract_financial_facts_from_documents
 from stock_research.graph import build_graph
+from stock_research.layer1_questions import build_layer1_question_pack
 from stock_research.learning.lessons import build_lesson_report, load_lesson_registry
-from stock_research.metrics.v1 import calculate_v1_metrics
+from stock_research.material_events import scan_material_events
+from stock_research.management_communication import build_management_communication_pack
+from stock_research.metrics.v1 import calculate_v1_financial_metrics, calculate_v1_valuation_metrics
 from stock_research.monitoring.watchlist import run_watchlist_monitor
-from stock_research.reports.markdown import build_financial_results_report
+from stock_research.official_evidence import (
+    build_official_report_evidence_pack,
+    build_official_report_evidence_report,
+)
+from stock_research.report_pack import build_financial_report_pack
+from stock_research.reports.financial_interpretation import build_financial_easy_reading_report
+from stock_research.reports.financial_research_draft import build_financial_research_draft
+from stock_research.reports.financial_visual import build_financial_visual_report
+from stock_research.reports.markdown import build_final_report, build_financial_results_report
+from stock_research.sources.fmp import run_fmp_smoke_test
 from stock_research.state import make_initial_state
-from stock_research.storage import ensure_run_layout, save_state, write_financial_results_report
+from stock_research.storage import (
+    ensure_run_layout,
+    save_state,
+    write_evidence_communication_pack,
+    write_evidence_communication_report,
+    write_feedback_loop_pack,
+    write_feedback_loop_report,
+    write_financial_easy_reading_report,
+    write_financial_report_pack,
+    write_layer1_question_pack,
+    write_financial_research_draft,
+    write_financial_results_report,
+    write_financial_visual_report,
+    write_final_report,
+    write_management_communication_pack,
+    write_official_report_evidence_pack,
+    write_official_report_evidence_report,
+)
 
 
 def make_run_id(company: str) -> str:
@@ -50,7 +91,37 @@ def run_research(
         "run_dir": final_state["run_dir"],
         "final_report_path": final_state.get("final_report_path"),
         "financial_results_report_path": final_state.get("financial_results_report_path"),
+        "financial_easy_reading_report_path": final_state.get("financial_easy_reading_report_path"),
+        "financial_research_draft_path": final_state.get("financial_research_draft_path"),
+        "financial_visual_report_path": final_state.get("financial_visual_report_path"),
+        "layer1_question_pack_path": final_state.get("layer1_question_pack_path"),
+        "evidence_communication_pack_path": final_state.get("evidence_communication_pack_path"),
+        "evidence_communication_report_path": final_state.get("evidence_communication_report_path"),
+        "feedback_loop_pack_path": final_state.get("feedback_loop_pack_path"),
+        "feedback_loop_report_path": final_state.get("feedback_loop_report_path"),
+        "source_map_path": final_state.get("source_map_path"),
+        "decision_question_pack_path": final_state.get("decision_question_pack_path"),
+        "evidence_plan_path": final_state.get("evidence_plan_path"),
+        "filing_deep_read_pack_path": final_state.get("filing_deep_read_pack_path"),
+        "evidence_registry_path": final_state.get("evidence_registry_path"),
+        "question_evidence_completion_pack_path": final_state.get("question_evidence_completion_pack_path"),
+        "theme_workpaper_pack_path": final_state.get("theme_workpaper_pack_path"),
+        "theme_workpaper_report_path": final_state.get("theme_workpaper_report_path"),
+        "question_dossier_pack_path": final_state.get("question_dossier_pack_path"),
+        "theme_workpaper_evidence_appendix_path": final_state.get("theme_workpaper_evidence_appendix_path"),
+        "qa_gap_triage_path": final_state.get("qa_gap_triage_path"),
+        "pillar_judgment_stub_path": final_state.get("pillar_judgment_stub_path"),
+        "official_report_evidence_report_path": final_state.get("official_report_evidence_report_path"),
+        "business_model_evidence_pack_path": final_state.get("business_model_evidence_pack_path"),
+        "business_model_evidence_report_path": final_state.get("business_model_evidence_report_path"),
+        "business_model_unit_economics_pack_path": final_state.get("business_model_unit_economics_pack_path"),
+        "business_model_unit_economics_report_path": final_state.get("business_model_unit_economics_report_path"),
+        "business_model_unit_economics_chinese_report_path": final_state.get(
+            "business_model_unit_economics_chinese_report_path"
+        ),
         "business_model_report_path": final_state.get("business_model_report_path"),
+        "right_people_report_path": final_state.get("right_people_report_path"),
+        "right_people_chinese_report_path": final_state.get("right_people_chinese_report_path"),
         "data_linkage_report_path": final_state.get("data_linkage_report_path"),
         "graph_backend": final_state.get("graph_backend"),
     }
@@ -75,18 +146,126 @@ def rerun_financial_report(run_id: str, runs_dir: str | Path = "data/runs") -> d
     if not state_path.exists():
         raise FileNotFoundError(f"Run state not found: {state_path}")
     state = json.loads(state_path.read_text(encoding="utf-8"))
-    state["metrics"] = calculate_v1_metrics(
+    if state.get("documents"):
+        extraction = extract_financial_facts_from_documents(state.get("documents", []))
+        state["raw_extracted_facts"] = extraction["raw_facts"]
+        state["extracted_facts"] = extraction["selected_facts"]
+        state["extraction_summary"] = extraction["summary"]
+    state["metrics"] = calculate_v1_financial_metrics(state.get("extracted_facts", []))
+    state["diagnostic_findings"] = run_v1_financial_diagnostics(
+        extracted_facts=state.get("extracted_facts", []),
+        metrics=state.get("metrics", []),
+    )
+    state["material_event_scan"] = scan_material_events(state.get("documents", []))
+    state["valuation_metrics"] = calculate_v1_valuation_metrics(
         state.get("extracted_facts", []),
         market_inputs=state.get("market_inputs", {}),
+        financial_metrics=state.get("metrics", []),
     )
+    state["financial_report_pack"] = build_financial_report_pack(state)
+    write_financial_report_pack(state)
+    state["layer1_question_pack"] = build_layer1_question_pack(state)
+    write_layer1_question_pack(state)
+    state["financial_report_pack"]["layer1_question_pack_summary"] = (
+        state["layer1_question_pack"].get("summary") or {}
+    )
+    state["financial_report_pack"]["layer1_question_pack_path"] = state.get("layer1_question_pack_path")
+    write_financial_report_pack(state)
+    state["official_report_evidence_pack"] = build_official_report_evidence_pack(state)
+    write_official_report_evidence_pack(state)
+    evidence_report = build_official_report_evidence_report(state.get("official_report_evidence_pack", {}))
+    write_official_report_evidence_report(state, evidence_report)
+    state["management_communication_pack"] = build_management_communication_pack(state)
+    write_management_communication_pack(state)
+    state["evidence_communication_pack"] = build_evidence_communication_pack(state)
+    write_evidence_communication_pack(state)
+    evidence_communication_report = build_evidence_communication_report(state["evidence_communication_pack"])
+    write_evidence_communication_report(state, evidence_communication_report)
+    state["financial_report_pack"]["official_report_evidence_pack_path"] = state.get(
+        "official_report_evidence_pack_path"
+    )
+    state["financial_report_pack"]["management_communication_pack_path"] = state.get(
+        "management_communication_pack_path"
+    )
+    state["financial_report_pack"]["evidence_communication_pack_summary"] = (
+        state["evidence_communication_pack"].get("summary") or {}
+    )
+    state["financial_report_pack"]["evidence_communication_pack_path"] = state.get(
+        "evidence_communication_pack_path"
+    )
+    write_financial_report_pack(state)
+    state["feedback_loop_pack"] = build_feedback_loop_pack(state)
+    write_feedback_loop_pack(state)
+    state["feedback_loop_pack"].setdefault("source_artifacts", {})["feedback_loop_pack_path"] = state.get(
+        "feedback_loop_pack_path"
+    )
+    write_feedback_loop_pack(state)
+    state["layer1_question_pack"] = apply_feedback_to_layer1_question_pack(
+        state.get("layer1_question_pack", {}),
+        state["feedback_loop_pack"],
+    )
+    write_layer1_question_pack(state)
+    feedback_loop_report = build_feedback_loop_report(state["feedback_loop_pack"])
+    write_feedback_loop_report(state, feedback_loop_report)
+    state["financial_report_pack"]["layer1_question_pack_summary"] = (
+        state["layer1_question_pack"].get("summary") or {}
+    )
+    state["financial_report_pack"]["layer1_question_pack_path"] = state.get("layer1_question_pack_path")
+    state["financial_report_pack"]["feedback_loop_pack_summary"] = (
+        state["feedback_loop_pack"].get("summary") or {}
+    )
+    state["financial_report_pack"]["feedback_loop_pack_path"] = state.get("feedback_loop_pack_path")
+    write_financial_report_pack(state)
     report = build_financial_results_report(state, audit_status="Draft pending audit review")
     write_financial_results_report(state, report)
+    easy_report = build_financial_easy_reading_report(
+        state.get("financial_report_pack", {}),
+        audit_status="Draft pending audit review",
+        official_evidence_pack=state.get("official_report_evidence_pack", {}),
+        management_communication_pack=state.get("management_communication_pack", {}),
+    )
+    write_financial_easy_reading_report(state, easy_report)
+    research_draft = build_financial_research_draft(
+        state.get("financial_report_pack", {}),
+        audit_status="Draft pending audit review",
+        layer1_question_pack=state.get("layer1_question_pack", {}),
+        evidence_communication_pack=state.get("evidence_communication_pack", {}),
+        feedback_loop_pack=state.get("feedback_loop_pack", {}),
+        official_evidence_pack=state.get("official_report_evidence_pack", {}),
+        management_communication_pack=state.get("management_communication_pack", {}),
+    )
+    write_financial_research_draft(state, research_draft)
+    visual_report = build_financial_visual_report(
+        state.get("financial_report_pack", {}),
+        audit_status="Draft pending audit review",
+        markdown_report_path=state.get("financial_easy_reading_report_path"),
+        official_evidence_pack=state.get("official_report_evidence_pack", {}),
+        management_communication_pack=state.get("management_communication_pack", {}),
+    )
+    write_financial_visual_report(state, visual_report)
+    final_report = build_final_report(state, audit_status="Draft pending audit review")
+    write_final_report(state, final_report)
     save_state(state)
     return {
         "run_id": state["run_id"],
         "run_dir": state["run_dir"],
+        "final_report_path": state.get("final_report_path"),
         "financial_results_report_path": state["financial_results_report_path"],
+        "financial_easy_reading_report_path": state.get("financial_easy_reading_report_path"),
+        "financial_research_draft_path": state.get("financial_research_draft_path"),
+        "financial_visual_report_path": state.get("financial_visual_report_path"),
+        "layer1_question_pack_path": state.get("layer1_question_pack_path"),
+        "evidence_communication_pack_path": state.get("evidence_communication_pack_path"),
+        "evidence_communication_report_path": state.get("evidence_communication_report_path"),
+        "feedback_loop_pack_path": state.get("feedback_loop_pack_path"),
+        "feedback_loop_report_path": state.get("feedback_loop_report_path"),
+        "official_report_evidence_pack_path": state.get("official_report_evidence_pack_path"),
+        "official_report_evidence_report_path": state.get("official_report_evidence_report_path"),
+        "management_communication_pack_path": state.get("management_communication_pack_path"),
         "metric_families": len(state.get("metrics", [])),
+        "diagnostic_status": (state.get("diagnostic_findings") or {}).get("status"),
+        "material_event_status": (state.get("material_event_scan") or {}).get("status"),
+        "financial_report_pack_path": state.get("financial_report_pack_path"),
     }
 
 
@@ -110,6 +289,19 @@ def rerun_alternative_data(run_id: str, runs_dir: str | Path = "data/runs") -> d
     }
 
 
+def run_comparator_evidence(
+    *,
+    input_path: str | Path,
+    output_dir: str | Path = "data/comparator_evidence",
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    return run_comparator_evidence_pipeline(
+        input_path=input_path,
+        output_dir=output_dir,
+        run_id=run_id,
+    )
+
+
 def write_lesson_report(
     *,
     registry_path: str | Path = "config/learning/user_lessons.v1.json",
@@ -126,6 +318,15 @@ def write_lesson_report(
         "source_materials": len(registry.get("source_materials", [])),
         "agents": len(registry.get("agent_lessons", {})),
     }
+
+
+def run_fmp_smoke(
+    *,
+    symbol: str,
+    output_dir: str | Path = "data/fmp_smoke",
+    limit: int = 5,
+) -> dict[str, Any]:
+    return run_fmp_smoke_test(symbol=symbol, output_dir=output_dir, limit=limit)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -161,6 +362,14 @@ def build_parser() -> argparse.ArgumentParser:
     alternative_parser.add_argument("run_id")
     alternative_parser.add_argument("--runs-dir", default="data/runs")
 
+    comparator_parser = subparsers.add_parser(
+        "comparator-evidence",
+        help="Build a comparator evidence pack and Markdown report for a target company.",
+    )
+    comparator_parser.add_argument("--input", required=True, help="JSON or YAML comparator request path.")
+    comparator_parser.add_argument("--output-dir", default="data/comparator_evidence")
+    comparator_parser.add_argument("--run-id", default=None)
+
     lessons_parser = subparsers.add_parser("lessons", help="Write a Markdown lesson registry report.")
     lessons_parser.add_argument("--registry", default="config/learning/user_lessons.v1.json")
     lessons_parser.add_argument("--output", default="data/learning_lessons_report.md")
@@ -169,6 +378,11 @@ def build_parser() -> argparse.ArgumentParser:
     monitor_parser.add_argument("--watchlist", default="config/watchlist.json")
     monitor_parser.add_argument("--cache-root", default="data/raw")
     monitor_parser.add_argument("--output-dir", default="data/monitoring")
+
+    fmp_parser = subparsers.add_parser("fmp-smoke", help="Smoke-test Financial Modeling Prep endpoints.")
+    fmp_parser.add_argument("--symbol", required=True, help="Ticker symbol, e.g. PDD.")
+    fmp_parser.add_argument("--output-dir", default="data/fmp_smoke")
+    fmp_parser.add_argument("--limit", type=int, default=5)
 
     return parser
 
@@ -221,6 +435,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
+    if args.command == "comparator-evidence":
+        print(
+            json.dumps(
+                run_comparator_evidence(
+                    input_path=args.input,
+                    output_dir=args.output_dir,
+                    run_id=args.run_id,
+                ),
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
     if args.command == "lessons":
         print(
             json.dumps(
@@ -238,6 +466,20 @@ def main(argv: list[str] | None = None) -> int:
                     watchlist_path=args.watchlist,
                     cache_root=args.cache_root,
                     output_dir=args.output_dir,
+                ),
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "fmp-smoke":
+        print(
+            json.dumps(
+                run_fmp_smoke(
+                    symbol=args.symbol,
+                    output_dir=args.output_dir,
+                    limit=args.limit,
                 ),
                 indent=2,
                 ensure_ascii=False,

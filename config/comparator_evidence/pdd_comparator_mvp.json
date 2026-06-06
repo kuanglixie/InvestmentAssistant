@@ -1,0 +1,23 @@
+{
+  "schema_version": "comparator_request_v1",
+  "main_company": {
+    "name": "PDD Holdings",
+    "ticker": "PDD",
+    "market": "US"
+  },
+  "competitors": [
+    "Alibaba",
+    "JD",
+    "Amazon",
+    "SHEIN",
+    "TikTok Shop",
+    "AliExpress"
+  ],
+  "battlefields": [
+    "China ecommerce",
+    "Cross-border ecommerce",
+    "Merchant advertising",
+    "Logistics",
+    "Supply chain"
+  ]
+}

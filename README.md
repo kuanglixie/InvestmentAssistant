@@ -1,6 +1,10 @@
-# Stock Research Multi-Agent System
+# Investment Assistant
 
-CLI-first scaffold for a LangGraph/LangChain stock research system focused on deep value-investing research.
+Consolidated repo for the stock research multi-agent system and related investment-assistant prototypes.
+
+For the folder-level organization, see `REPO_MAP.md`.
+
+The core app is a CLI-first scaffold for a LangGraph/LangChain stock research system focused on deep value-investing research.
 
 V1 target:
 

@@ -1,0 +1,92 @@
+{
+  "company_id": "pdd",
+  "ticker": "PDD",
+  "company_name": "PDD Holdings",
+  "primary_brand_id": "temu",
+  "markets": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"],
+  "brands": [
+    {
+      "brand_id": "temu",
+      "display_name": "Temu",
+      "role": "primary",
+      "domains": ["temu.com"],
+      "ios_apps": [
+        {
+          "app_id": "1641486558",
+          "name": "Temu",
+          "category": "shopping",
+          "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]
+        }
+      ],
+      "android_apps": [
+        {
+          "package_name": "com.einnovation.temu",
+          "name": "Temu",
+          "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]
+        }
+      ],
+      "search_terms": ["Temu", "Temu app", "Temu coupon"]
+    },
+    {
+      "brand_id": "shein",
+      "display_name": "SHEIN",
+      "role": "competitor",
+      "domains": ["shein.com"],
+      "ios_apps": [{"app_id": "878577184", "name": "SHEIN", "category": "shopping", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "android_apps": [{"package_name": "com.zzkko", "name": "SHEIN", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "search_terms": ["SHEIN"]
+    },
+    {
+      "brand_id": "aliexpress",
+      "display_name": "AliExpress",
+      "role": "competitor",
+      "domains": ["aliexpress.com"],
+      "ios_apps": [{"app_id": "436672029", "name": "AliExpress", "category": "shopping", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "android_apps": [{"package_name": "com.alibaba.aliexpresshd", "name": "AliExpress", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "search_terms": ["AliExpress"]
+    },
+    {
+      "brand_id": "tiktok_shop",
+      "display_name": "TikTok Shop",
+      "role": "competitor",
+      "domains": ["shop.tiktok.com"],
+      "ios_apps": [],
+      "android_apps": [],
+      "search_terms": ["TikTok Shop"]
+    },
+    {
+      "brand_id": "amazon",
+      "display_name": "Amazon",
+      "role": "competitor",
+      "domains": ["amazon.com"],
+      "ios_apps": [{"app_id": "297606951", "name": "Amazon Shopping", "category": "shopping", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "android_apps": [{"package_name": "com.amazon.mShop.android.shopping", "name": "Amazon Shopping", "country_scope": ["US", "UK", "DE", "FR", "IT", "ES", "NL", "CA", "AU", "JP", "KR", "SG", "HK", "TW"]}],
+      "search_terms": ["Amazon shopping"]
+    },
+    {
+      "brand_id": "walmart",
+      "display_name": "Walmart",
+      "role": "competitor",
+      "domains": ["walmart.com"],
+      "ios_apps": [{"app_id": "338137227", "name": "Walmart", "category": "shopping", "country_scope": ["US", "CA"]}],
+      "android_apps": [{"package_name": "com.walmart.android", "name": "Walmart", "country_scope": ["US", "CA"]}],
+      "search_terms": ["Walmart"]
+    }
+  ],
+  "competitor_groups": {
+    "cross_border_discount": ["shein", "aliexpress", "tiktok_shop"],
+    "general_retail": ["amazon", "walmart"]
+  },
+  "review_taxonomy": [
+    "delivery_delay",
+    "refund_return",
+    "product_quality",
+    "trust_scam",
+    "customs_tax",
+    "payment_issue",
+    "customer_service",
+    "app_bug",
+    "ads_promotion",
+    "pricing_coupon"
+  ]
+}

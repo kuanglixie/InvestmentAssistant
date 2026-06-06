@@ -1,11 +1,28 @@
 __pycache__/
 *.py[cod]
+.DS_Store
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 .venv/
 .env
+
+# Main research runtime outputs and local source caches.
+data/automation/
 data/raw/
 data/runs/
 data/test-runs/
 data/monitoring/
+data/alternative_data/
+data/fmp_smoke/
 data/*.md
 data/*.json
+data/*.sqlite
+data/sec_companyfacts_smoke/
+
+# Prototype runtime outputs and heavyweight captured pages/databases.
+prototypes/**/artifacts/
+prototypes/**/data/
+prototypes/**/*.sqlite
+prototypes/**/raw_pages/

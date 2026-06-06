@@ -12,6 +12,56 @@ FINANCIAL_EXTRACTION_CATEGORIES = {
     "KEEP_SECONDARY_INTERIM_FINANCIAL_CONTEXT",
 }
 
+DEEP_RESEARCH_CATEGORIES = FINANCIAL_EXTRACTION_CATEGORIES | {
+    "KEEP_CORE_PROSPECTUS",
+    "KEEP_MONITORING_GOVERNANCE",
+    "KEEP_MONITORING_MANAGEMENT",
+    "KEEP_MONITORING_AUDITOR_ACCOUNTING",
+    "KEEP_MONITORING_FINANCING_CAPITAL_MARKETS",
+    "KEEP_MONITORING_CAPITAL_ALLOCATION",
+}
+
+PROSPECTUS_FORMS = {
+    "S-1",
+    "S-1/A",
+    "F-1",
+    "F-1/A",
+    "F-1MEF",
+    "424B4",
+}
+
+GOVERNANCE_FORMS = {
+    "DEF 14A",
+    "DEFA14A",
+    "PRE 14A",
+    "DEF 14C",
+    "DEFA14C",
+    "PRE 14C",
+}
+
+CAPITAL_MARKETS_FORMS = {
+    "424B3",
+    "424B5",
+    "F-3",
+    "F-3/A",
+    "F-3ASR",
+    "S-3",
+    "S-3/A",
+    "S-3ASR",
+    "FWP",
+}
+
+TRUSTED_FINANCIAL_SOURCE_IDS = {
+    "pdd_investor_relations",
+    "tencent_investor_relations",
+}
+
+TRUSTED_FINANCIAL_SOURCE_PREFIXES = (
+    "sec_edgar",
+    "hkex_",
+    "investor_relations_",
+)
+
 DROP_FROM_RESEARCH_CATEGORIES = {
     "DROP_SEC_INDEX_OR_HEADERS",
 }
@@ -55,6 +105,24 @@ def classify_sec_document_text(
             "KEEP_CORE_ANNUAL_REPORT",
             "Keep",
             "Annual report; core source for annual financials, business, risk, ownership, and governance.",
+        )
+    if form in PROSPECTUS_FORMS:
+        return _classification(
+            "KEEP_CORE_PROSPECTUS",
+            "Keep",
+            "IPO/prospectus filing; core source for original business model, VIE/ownership, risk factors, use of proceeds, and early governance.",
+        )
+    if form in GOVERNANCE_FORMS:
+        return _classification(
+            "KEEP_MONITORING_GOVERNANCE",
+            "Keep secondary",
+            "Proxy or shareholder-governance filing; useful for incentives, board structure, voting rights, and related-party review.",
+        )
+    if form in CAPITAL_MARKETS_FORMS:
+        return _classification(
+            "KEEP_MONITORING_FINANCING_CAPITAL_MARKETS",
+            "Keep secondary",
+            "Securities offering, shelf, or capital-markets filing; useful for dilution, debt, capital structure, and capital allocation review.",
         )
     if "index" in filename_lower or "headers" in filename_lower:
         return _classification(
@@ -130,6 +198,29 @@ def classify_sec_document_text(
     if _contains_any(
         text_lower,
         (
+            "changes in registrant's certifying accountant",
+            "change in registrant's certifying accountant",
+            "independent registered public accounting firm",
+            "auditor resignation",
+            "auditor dismissed",
+            "dismissal of independent auditor",
+            "appointed as the company's independent auditor",
+            "non-reliance on previously issued financial statements",
+            "non reliance on previously issued financial statements",
+            "restatement of previously issued financial statements",
+            "material weakness",
+            "internal control over financial reporting",
+            "audit committee concluded",
+        ),
+    ):
+        return _classification(
+            "KEEP_MONITORING_AUDITOR_ACCOUNTING",
+            "Keep secondary",
+            "Auditor, restatement, internal-control, or accounting-reliability disclosure.",
+        )
+    if _contains_any(
+        text_lower,
+        (
             "convertible senior notes",
             "offering of american depositary shares",
             "follow-on public offering",
@@ -160,8 +251,24 @@ def classify_sec_document_text(
 
 
 def is_financial_extraction_document(document: dict[str, Any]) -> bool:
+    if not is_trusted_financial_source(document):
+        return False
     category = classify_sec_document_record(document)["category"]
     return category in FINANCIAL_EXTRACTION_CATEGORIES
+
+
+def is_deep_research_document(document: dict[str, Any]) -> bool:
+    if not is_trusted_financial_source(document):
+        return False
+    category = classify_sec_document_record(document)["category"]
+    return category in DEEP_RESEARCH_CATEGORIES
+
+
+def is_trusted_financial_source(document: dict[str, Any]) -> bool:
+    source_id = str(document.get("source_id") or "")
+    if source_id in TRUSTED_FINANCIAL_SOURCE_IDS:
+        return True
+    return any(source_id.startswith(prefix) for prefix in TRUSTED_FINANCIAL_SOURCE_PREFIXES)
 
 
 def _document_form(document: dict[str, Any]) -> str:

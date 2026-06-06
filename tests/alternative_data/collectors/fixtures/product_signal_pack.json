@@ -1,0 +1,29 @@
+{
+  "company": "PDD",
+  "brand": "Temu",
+  "period": "2026-W22",
+  "product_signals": [
+    {
+      "company": "PDD",
+      "brand": "Temu",
+      "period": "2026-W22",
+      "category": "all",
+      "signal": "promotion_intensity_rising",
+      "metric": "coupon_availability_rate",
+      "current_value": 0.46,
+      "severity": "medium",
+      "confidence": "medium"
+    },
+    {
+      "company": "PDD",
+      "brand": "Temu",
+      "period": "2026-W22",
+      "category": "all",
+      "signal": "delivery_worsening",
+      "metric": "median_delivery_max_days",
+      "current_value": 11.0,
+      "severity": "medium",
+      "confidence": "medium"
+    }
+  ]
+}

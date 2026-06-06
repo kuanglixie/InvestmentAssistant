@@ -1,0 +1,20 @@
+{
+  "records": [
+    {
+      "source_id": "amazon_10k_fixture",
+      "source_type": "official_filing",
+      "competitor_id": "amazon",
+      "title": "Amazon filing excerpt",
+      "url": "https://example.com/amazon-10k",
+      "text": "We compete on price, selection, and delivery speed. Regulatory and customs compliance can affect marketplace sellers and cross-border fulfillment."
+    },
+    {
+      "source_id": "shein_policy_fixture",
+      "source_type": "official_policy_page",
+      "competitor_id": "shein",
+      "title": "SHEIN return policy excerpt",
+      "url": "https://example.com/shein-policy",
+      "text": "Customers may request a return or refund. Marketing campaigns and creator advertising can increase traffic to selected products."
+    }
+  ]
+}

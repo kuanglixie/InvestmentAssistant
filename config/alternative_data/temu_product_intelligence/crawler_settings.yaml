@@ -1,0 +1,8 @@
+{
+  "headless": true,
+  "timeout_ms": 30000,
+  "wait_until": "domcontentloaded",
+  "post_load_wait_ms": 2000,
+  "min_delay_seconds": 3.0,
+  "max_retries": 2
+}

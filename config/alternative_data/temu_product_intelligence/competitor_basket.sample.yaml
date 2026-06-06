@@ -1,0 +1,32 @@
+{
+  "brand": "CompetitorBasket",
+  "company": "PDD",
+  "region": "US",
+  "currency": "USD",
+  "products": [
+    {
+      "tracking_id": "amazon_kitchen_001",
+      "category": "kitchen",
+      "url": "https://www.amazon.com/dp/REPLACE_WITH_ASIN",
+      "notes": "Manual comparable SKU for Temu kitchen basket. Prefer PA-API GetItems when credentials are available."
+    },
+    {
+      "tracking_id": "walmart_kitchen_001",
+      "category": "kitchen",
+      "url": "https://www.walmart.com/ip/REPLACE_WITH_ITEM_ID",
+      "notes": "Manual comparable SKU. Walmart Marketplace Item Search API can help discover candidate items with credentials."
+    },
+    {
+      "tracking_id": "aliexpress_kitchen_001",
+      "category": "kitchen",
+      "url": "https://www.aliexpress.us/item/REPLACE_WITH_ITEM_ID.html",
+      "notes": "Manual comparable SKU. AliExpress affiliate/open-platform access is the cleaner route if available."
+    },
+    {
+      "tracking_id": "shein_home_001",
+      "category": "home_goods",
+      "url": "https://us.shein.com/REPLACE-WITH-PRODUCT-p-REPLACE_WITH_PRODUCT_ID.html",
+      "notes": "Manual comparable SKU. SHEIN Open Platform is seller-oriented; public competitor monitoring may need manual snapshots or a licensed provider."
+    }
+  ]
+}

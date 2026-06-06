@@ -1,0 +1,28 @@
+{
+  "brand": "Temu",
+  "company": "PDD",
+  "region": "US",
+  "currency": "USD",
+  "products": [
+    {"tracking_id": "temu_toys_001", "category": "toys", "url": "fixture://temu_product_sample.html", "notes": "fixture popular toy item"},
+    {"tracking_id": "temu_toys_002", "category": "toys", "url": "fixture://temu_product_variant.html", "notes": "fixture low-price toy item"},
+    {"tracking_id": "temu_baby_kids_001", "category": "baby_kids", "url": "fixture://temu_product_sample.html", "notes": "fixture baby/kids item"},
+    {"tracking_id": "temu_baby_kids_002", "category": "baby_kids", "url": "fixture://temu_product_variant.html", "notes": "fixture baby/kids value item"},
+    {"tracking_id": "temu_home_goods_001", "category": "home_goods", "url": "fixture://temu_product_sample.html", "notes": "fixture home goods item"},
+    {"tracking_id": "temu_home_goods_002", "category": "home_goods", "url": "fixture://temu_product_variant.html", "notes": "fixture home goods value item"},
+    {"tracking_id": "temu_kitchen_001", "category": "kitchen", "url": "fixture://temu_product_sample.html", "notes": "fixture low-price kitchen item"},
+    {"tracking_id": "temu_kitchen_002", "category": "kitchen", "url": "fixture://temu_product_variant.html", "notes": "fixture kitchen promo item"},
+    {"tracking_id": "temu_electronics_accessories_001", "category": "electronics_accessories", "url": "fixture://temu_product_sample.html", "notes": "fixture electronics accessory"},
+    {"tracking_id": "temu_electronics_accessories_002", "category": "electronics_accessories", "url": "fixture://temu_product_variant.html", "notes": "fixture electronics accessory value item"},
+    {"tracking_id": "temu_beauty_001", "category": "beauty", "url": "fixture://temu_product_sample.html", "notes": "fixture beauty item"},
+    {"tracking_id": "temu_beauty_002", "category": "beauty", "url": "fixture://temu_product_variant.html", "notes": "fixture beauty promo item"},
+    {"tracking_id": "temu_fashion_accessories_001", "category": "fashion_accessories", "url": "fixture://temu_product_sample.html", "notes": "fixture fashion accessory"},
+    {"tracking_id": "temu_fashion_accessories_002", "category": "fashion_accessories", "url": "fixture://temu_product_variant.html", "notes": "fixture fashion accessory value item"},
+    {"tracking_id": "temu_pet_supplies_001", "category": "pet_supplies", "url": "fixture://temu_product_sample.html", "notes": "fixture pet supplies item"},
+    {"tracking_id": "temu_pet_supplies_002", "category": "pet_supplies", "url": "fixture://temu_product_variant.html", "notes": "fixture pet supplies value item"},
+    {"tracking_id": "temu_tools_001", "category": "tools", "url": "fixture://temu_product_sample.html", "notes": "fixture tool item"},
+    {"tracking_id": "temu_tools_002", "category": "tools", "url": "fixture://temu_product_variant.html", "notes": "fixture tool value item"},
+    {"tracking_id": "temu_party_supplies_001", "category": "party_supplies", "url": "fixture://temu_product_sample.html", "notes": "fixture party supplies item"},
+    {"tracking_id": "temu_party_supplies_002", "category": "party_supplies", "url": "fixture://temu_product_variant.html", "notes": "fixture party supplies value item"}
+  ]
+}

@@ -1,0 +1,75 @@
+[
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "ios",
+    "app_id": "1641486558",
+    "collected_at": "2026-05-21T00:00:00Z",
+    "rank": 18,
+    "rating": 4.62,
+    "rating_count": 420000,
+    "review_count": 420000,
+    "version": "3.40.0"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "ios",
+    "app_id": "1641486558",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rank": 9,
+    "rating": 4.56,
+    "rating_count": 438000,
+    "review_count": 438000,
+    "version": "3.41.0"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "android",
+    "app_id": "com.einnovation.temu",
+    "collected_at": "2026-05-21T00:00:00Z",
+    "rank": 22,
+    "rating": 4.51,
+    "rating_count": 1280000,
+    "review_count": 1280000,
+    "version": "3.40.0"
+  },
+  {
+    "brand_id": "temu",
+    "market": "US",
+    "platform": "android",
+    "app_id": "com.einnovation.temu",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rank": 13,
+    "rating": 4.46,
+    "rating_count": 1325000,
+    "review_count": 1325000,
+    "version": "3.41.0"
+  },
+  {
+    "brand_id": "shein",
+    "market": "US",
+    "platform": "ios",
+    "app_id": "878577184",
+    "collected_at": "2026-05-21T00:00:00Z",
+    "rank": 11,
+    "rating": 4.71,
+    "rating_count": 610000,
+    "review_count": 610000,
+    "version": "12.0.0"
+  },
+  {
+    "brand_id": "shein",
+    "market": "US",
+    "platform": "ios",
+    "app_id": "878577184",
+    "collected_at": "2026-05-28T00:00:00Z",
+    "rank": 12,
+    "rating": 4.71,
+    "rating_count": 613000,
+    "review_count": 613000,
+    "version": "12.0.1"
+  }
+]
+

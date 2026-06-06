@@ -1,0 +1,12 @@
+date,market,term,value,source_name
+2026-05-21,US,Temu,64,fixture_csv
+2026-05-28,US,Temu,78,fixture_csv
+2026-05-21,US,Temu coupon,20,fixture_csv
+2026-05-28,US,Temu coupon,29,fixture_csv
+2026-05-21,US,SHEIN,70,fixture_csv
+2026-05-28,US,SHEIN,69,fixture_csv
+2026-05-21,US,AliExpress,28,fixture_csv
+2026-05-28,US,AliExpress,27,fixture_csv
+2026-05-21,US,TikTok Shop,41,fixture_csv
+2026-05-28,US,TikTok Shop,43,fixture_csv
+

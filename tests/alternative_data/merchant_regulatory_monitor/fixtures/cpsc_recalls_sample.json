@@ -1,0 +1,33 @@
+[
+  {
+    "RecallID": "100001",
+    "RecallNumber": "26-001",
+    "RecallDate": "06/01/2026",
+    "Title": "Children's magnetic building set sold on Temu recalled due to ingestion hazard",
+    "Description": "The recalled toy was sold through the Temu marketplace and contains magnets that can pose a serious injury hazard if swallowed.",
+    "Products": [
+      {
+        "Name": "Magnetic building set",
+        "Description": "Small magnet toy kit"
+      }
+    ],
+    "Hazards": [
+      {
+        "Name": "Ingestion hazard"
+      }
+    ],
+    "Retailers": [
+      {
+        "Name": "Temu"
+      }
+    ],
+    "URL": "https://www.cpsc.gov/Recalls/example"
+  },
+  {
+    "RecallID": "100002",
+    "RecallNumber": "26-002",
+    "RecallDate": "06/01/2026",
+    "Title": "Unrelated product recall",
+    "Description": "Sold at a local hardware store."
+  }
+]

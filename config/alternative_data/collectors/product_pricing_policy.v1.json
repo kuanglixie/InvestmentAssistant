@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "collector_id": "product_pricing_policy_v1",
+  "scope": "target_company",
+  "company": "PDD",
+  "brand": "Temu",
+  "purpose": "Collect and summarize target-company product, price, delivery, seller, and platform-policy evidence.",
+  "primary_questions": [
+    "Is Temu relying more on discounts, coupons, or seller-funded promotions?",
+    "Are delivery promises, stock availability, or visible product quality deteriorating?",
+    "Are seller terms, fees, return/refund rules, payout timing, penalties, or fulfillment obligations tightening?",
+    "Which product or policy changes need follow-up by the investment agent?"
+  ],
+  "accepted_inputs": [
+    {
+      "name": "product_snapshots",
+      "default_path": "data/alternative_data/temu_product_intelligence/latest/latest_snapshots.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence",
+      "required_for": ["snapshot-level price, coupon, delivery, stock, and rating summaries"]
+    },
+    {
+      "name": "weekly_product_metrics",
+      "default_path": "data/alternative_data/temu_product_intelligence/latest/weekly_metrics.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence",
+      "required_for": ["trend-aware price, discount, coupon, delivery, stockout, and rating metrics"]
+    },
+    {
+      "name": "product_signal_pack",
+      "default_path": "data/alternative_data/temu_product_intelligence/latest/product_signal_pack.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence",
+      "required_for": ["promotion, delivery, stockout, and rating product signals"]
+    },
+    {
+      "name": "unit_economics_pack",
+      "default_path": "data/alternative_data/temu_product_intelligence/latest/unit_economics_pack.json",
+      "source": "stock_research.alternative_data.temu_product_intelligence",
+      "required_for": ["unit-economics proxy metrics"]
+    },
+    {
+      "name": "merchant_policy_events",
+      "default_path": "data/alternative_data/merchant_regulatory_monitor/live_temu/merchant_regulatory_events.json",
+      "source": "stock_research.alternative_data.merchant_regulatory_monitor",
+      "required_for": ["seller terms, platform policy, payout, returns, fees, penalties, and fulfillment events"]
+    }
+  ],
+  "outputs": [
+    "product_pricing_policy_pack.json",
+    "product_pricing_policy_report.md"
+  ],
+  "finding_ids": [
+    "promotion_intensity_watch",
+    "delivery_promise_watch",
+    "merchant_policy_pressure_watch",
+    "product_supply_quality_watch",
+    "product_policy_stable_v1"
+  ]
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "company": "PDD",
+    "brand": "Temu",
+    "period": "2026-W22",
+    "category": "all",
+    "metric_name": "median_discount_pct",
+    "value": 58.0,
+    "change_1w": 3.0,
+    "change_4w": 6.0,
+    "confidence": "medium"
+  },
+  {
+    "company": "PDD",
+    "brand": "Temu",
+    "period": "2026-W22",
+    "category": "all",
+    "metric_name": "coupon_availability_rate",
+    "value": 0.46,
+    "change_1w": 0.08,
+    "change_4w": 0.13,
+    "confidence": "medium"
+  },
+  {
+    "company": "PDD",
+    "brand": "Temu",
+    "period": "2026-W22",
+    "category": "all",
+    "metric_name": "median_delivery_max_days",
+    "value": 11.0,
+    "change_1w": 1.0,
+    "change_4w": 2.0,
+    "confidence": "medium"
+  },
+  {
+    "company": "PDD",
+    "brand": "Temu",
+    "period": "2026-W22",
+    "category": "all",
+    "metric_name": "stockout_rate",
+    "value": 0.03,
+    "change_1w": 0.01,
+    "change_4w": 0.01,
+    "confidence": "medium"
+  }
+]

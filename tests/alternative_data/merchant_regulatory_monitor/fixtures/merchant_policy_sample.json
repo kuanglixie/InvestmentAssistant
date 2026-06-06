@@ -1,0 +1,23 @@
+{
+  "records": [
+    {
+      "source_id": "temu_seller_center_public_fixture",
+      "source_group": "merchant_platform_policy",
+      "source_type": "public_html_fixture",
+      "url": "https://seller.temu.com/",
+      "title": "Temu Seller Center public page",
+      "country": "US",
+      "market": "US",
+      "collected_at": "2026-06-02T08:00:00Z",
+      "text": "Sellers can use Product Ads to promote items and receive more traffic. Merchants must meet shipping and fulfillment requirements to avoid late shipment penalties. Refund and return disputes may affect seller performance. Payout settlement timing may change when risk reserves or policy violations are detected."
+    },
+    {
+      "source_id": "reddit_temu_seller_voice_fixture",
+      "source_group": "merchant_voice",
+      "source_type": "public_forum_fixture",
+      "title": "Seller payout complaint",
+      "collected_at": "2026-06-02T08:05:00Z",
+      "text": "A seller says payout was withheld after a return dispute and asks whether Temu charges additional fees for late delivery."
+    }
+  ]
+}
