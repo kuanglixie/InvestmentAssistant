@@ -1,0 +1,56 @@
+{
+  "status": "collected_with_partial_adapters",
+  "source_results": [
+    {
+      "source_id": "reddit_temu_customer_discussions",
+      "adapter": "reddit_public_json",
+      "status": "comments_collected",
+      "posts_collected": 2,
+      "comments_seen_before_filter": 5,
+      "comments_collected": 3,
+      "evidence_items": [
+        {
+          "collected_at": "2026-05-30T03:32:34Z",
+          "comment_id": "abc123",
+          "comment_score": 4,
+          "comment_url": "https://www.reddit.com/r/TemuThings/comments/post/comment/",
+          "excerpt": "Refund took weeks and support never fixed the shipping issue.",
+          "post_subreddit": "TemuThings",
+          "post_title": "Temu refund and shipping problem",
+          "post_url": "https://www.reddit.com/r/TemuThings/comments/post/",
+          "query": "Temu quality shipping refund",
+          "source_id": "reddit_temu_customer_discussions",
+          "source_name": "Reddit Temu customer discussions",
+          "themes": ["shipping_delivery", "refund_customer_service"],
+          "voice_type": "customer"
+        },
+        {
+          "collected_at": "2026-05-30T03:32:34Z",
+          "comment_id": "def456",
+          "comment_score": 2,
+          "comment_url": "https://www.reddit.com/r/temu/comments/post/comment/",
+          "excerpt": "The items were cheap and worth it for small accessories.",
+          "post_subreddit": "temu",
+          "post_title": "Is Temu worth it?",
+          "post_url": "https://www.reddit.com/r/temu/comments/post/",
+          "query": "Temu repeat purchase",
+          "source_id": "reddit_temu_customer_discussions",
+          "source_name": "Reddit Temu customer discussions",
+          "themes": ["value_for_money", "repeat_purchase_loyalty"],
+          "voice_type": "customer"
+        }
+      ]
+    },
+    {
+      "source_id": "sitejabber_temu_reviews",
+      "adapter": "web_reader_public_page",
+      "status": "review_items_collected",
+      "evidence_items": [
+        {
+          "excerpt": "This should not be exported by the Reddit prototype.",
+          "source_id": "sitejabber_temu_reviews"
+        }
+      ]
+    }
+  ]
+}

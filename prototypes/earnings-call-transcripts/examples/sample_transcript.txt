@@ -1,0 +1,10 @@
+Operator: Welcome to the sample earnings call.
+
+CEO: Revenue grew because customer retention improved and our core product saw stronger repeat usage.
+
+CFO: Gross margin declined due to logistics investment, but we expect the spending to improve service quality over time.
+
+Analyst: How should investors think about normalized margins?
+
+CFO: We are prioritizing long-term customer value over near-term margin optimization.
+

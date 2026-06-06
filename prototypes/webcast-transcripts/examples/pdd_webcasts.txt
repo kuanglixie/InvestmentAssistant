@@ -1,0 +1,8 @@
+# PDD official webcast URLs observed from the IR event archive
+
+Q1 2026: https://edge.media-server.com/mmc/p/t6vpaffq/
+Q4 2025: https://edge.media-server.com/mmc/p/6iz2hdu6/
+Q3 2025: https://edge.media-server.com/mmc/p/2vkxbtkq/
+Q2 2025: https://edge.media-server.com/mmc/p/u6685c8x/
+Q1 2025: https://edge.media-server.com/mmc/p/56c3c4fx/
+
