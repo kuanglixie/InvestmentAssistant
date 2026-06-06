@@ -219,8 +219,18 @@ def build_research_workflow_artifacts(state: ResearchState) -> dict[str, Any]:
         theme_workpaper_pack=theme_workpaper_pack,
         qa_gap_triage=qa_gap_triage,
     )
-    evidence_appendix = build_theme_workpaper_evidence_appendix(question_dossier_pack)
     pillar_judgment_stub = build_pillar_judgment_stub(theme_workpaper_pack, qa_gap_triage)
+    source_map = _english_safe_artifact(source_map)
+    question_pack = _english_safe_artifact(question_pack)
+    evidence_plan = _english_safe_artifact(evidence_plan)
+    filing_deep_read_pack = _english_safe_artifact(filing_deep_read_pack)
+    evidence_registry = _english_safe_artifact(evidence_registry)
+    question_evidence_completion_pack = _english_safe_artifact(question_evidence_completion_pack)
+    theme_workpaper_pack = _english_safe_artifact(theme_workpaper_pack)
+    question_dossier_pack = _english_safe_artifact(question_dossier_pack)
+    qa_gap_triage = _english_safe_artifact(qa_gap_triage)
+    pillar_judgment_stub = _english_safe_artifact(pillar_judgment_stub)
+    evidence_appendix = build_theme_workpaper_evidence_appendix(question_dossier_pack)
     report = build_research_workflow_report(
         source_map=source_map,
         decision_question_pack=question_pack,
@@ -4254,6 +4264,36 @@ ENGLISH_REPORT_TRANSLATIONS = {
     "官方文件中出现相关叙事，V1 将其登记为需要后续跟踪的决策相关信息。": (
         "Official filings contain this narrative; V1 registers it as decision-relevant information that needs follow-up tracking."
     ),
+    "供应链和商家支持叙事可解释部分利润率压力，但需要用费用率、现金流和后续季度结果继续验证。": (
+        "Supply-chain and merchant-support narratives may explain part of the margin pressure, but expense ratios, cash flow, and later quarterly results still need verification."
+    ),
+    "受限现金和 VIE 叙事会影响现金安全垫读法，账面现金不能自动视为可自由分配现金。": (
+        "Restricted cash and VIE disclosures affect the cash-buffer reading; reported cash should not be treated automatically as freely distributable cash."
+    ),
+    "AGM / proxy 材料提供治理事实：它能说明董事重选和 ADS 投票机制，但不能单独证明治理质量。": (
+        "AGM / proxy materials provide governance facts about director reelection and ADS voting mechanics, but they do not by themselves prove governance quality."
+    ),
+    "股权计划期限延长会拉长激励工具的可用期；当前还需要和 SBC、稀释、回购抵消情况一起判断。": (
+        "The equity-plan term extension lengthens the period during which incentive instruments can be used; it still needs to be evaluated together with SBC, dilution, and buyback offsets."
+    ),
+    "自营品牌业务是官方叙事中的战略举措，可能改变平台轻重和供应链控制深度；投入回报仍需验证。": (
+        "The first-party brand business is a strategic initiative in official communication; it may change asset intensity and supply-chain control depth, while investment returns remain unverified."
+    ),
+    "管理层把安全、合规和社会责任称为一切工作的前提，并具体提到第一季度推出 20 多项食品安全治理措施，包括资质审核、食品广告和直播监测、食品数据库、举报渠道和自动/人工巡检。": (
+        "Management describes safety, compliance, and social responsibility as prerequisites, and cites more than 20 food-safety governance measures launched in Q1, including qualification reviews, ad and livestream monitoring, food databases, reporting channels, and automated/manual inspections."
+    ),
+    "管理层把 2026Q1 定义为三年战略的第一个完整季度，核心抓手是 first-party brand、供应链投入和 RMB 100B 支持计划。这说明 2025 年以来的利润率压力不是单季偶发，而是管理层主动选择的投入周期。": (
+        "Management frames 2026Q1 as the first full quarter of the three-year strategy, centered on first-party brands, supply-chain investment, and the RMB 100B support program; this suggests margin pressure since 2025 is an intentional investment cycle rather than a single-quarter accident."
+    ),
+    "管理层反复把 PDD 的下一阶段竞争优势定义为供应链能力，而不是单纯流量、营销或用户增长。first-party brand 被描述为平台更主动参与产品开发、标准、质量、履约、合规和客服的机制。": (
+        "Management repeatedly defines PDD's next-stage competitive advantage as supply-chain capability rather than only traffic, marketing, or user growth; first-party brands are described as a mechanism for deeper platform participation in product development, standards, quality, fulfillment, compliance, and customer service."
+    ),
+    "在被直接问到长期稳定利润率时，CFO 没有给出利润率区间或时间表，而是强调季节性、投资周期、长期内在价值和供应链能力积累。": (
+        "When directly asked about long-term stable margins, the CFO did not provide a margin range or timeline, and instead emphasized seasonality, the investment cycle, long-term intrinsic value, and supply-chain capability building."
+    ),
+    "管理层用中山灯具到甘肃的运费案例、河南县域进村配送案例和远程地区物流补贴解释增长机制：平台通过承担转运成本，把部分偏远地区纳入包邮区，从而扩大需求和商家订单。": (
+        "Management explains the growth mechanism through examples such as Zhongshan lighting shipped to Gansu, county-level delivery in Henan, and remote-region logistics subsidies: the platform absorbs some transfer costs to expand free-shipping coverage, demand, and merchant orders."
+    ),
 }
 
 
@@ -4271,7 +4311,121 @@ def _apply_known_english_translations(text: str) -> str:
     translated = text
     for source, replacement in ENGLISH_REPORT_TRANSLATIONS.items():
         translated = translated.replace(source, replacement)
+    for source, replacement in ENGLISH_TERM_TRANSLATIONS.items():
+        translated = translated.replace(source, replacement)
     return translated
+
+
+ENGLISH_TERM_TRANSLATIONS = {
+    "收入增长来自哪里？增长质量好吗？": "Where does revenue growth come from, and is the growth quality good?",
+    "增长需要消耗多少资本？资本效率有没有变差？": "How much capital does growth consume, and is capital efficiency deteriorating?",
+    "这个公司赚的钱是真钱吗？现金流质量好不好？": "Are the company's earnings real cash earnings, and is cash-flow quality good?",
+    "规模变大以后利润率是上升还是下降？": "Do margins rise or fall as the company scales?",
+    "增长有没有被股权激励和稀释吃掉？": "Is growth being consumed by share-based compensation and dilution?",
+    "税率、非 GAAP 调整和会计项目有没有让利润看起来更好？": "Do tax rate, non-GAAP adjustments, or accounting items make profit look better?",
+    "资产负债表风险大不大？公司能不能扛住坏年份？": "How large is balance-sheet risk, and can the company withstand bad years?",
+    "下个季度先看增量经营利润率是否从负转正，并拆费用率、商家支持和供应链投入。": (
+        "Next quarter, first check whether incremental operating margin turns positive, and break down expense ratios, merchant support, and supply-chain investment."
+    ),
+    "商家分群 / 单商家经济性": "merchant segmentation / single-merchant economics",
+    "继续验证收入结构、商家经济性和投入回报是否改善。": "Continue verifying whether revenue mix, merchant economics, and investment returns improve.",
+    "把费用率、成本率和官方投入叙事连续跟踪到下一期。": "Track expense ratios, cost ratios, and official investment narratives into the next period.",
+    "应收账款": "accounts receivable",
+    "存货": "inventory",
+    "拆营运资本来源，确认现金流是否依赖商家相关负债和结算周期。": "Break down working-capital sources to determine whether cash flow depends on merchant-related liabilities and settlement timing.",
+    "维护性资本开支与增长性资本开支拆分": "maintenance capex versus growth capex split",
+    "区分维护性资本开支、增长性投入、供应链投入和品牌投入。": "Separate maintenance capex, growth investment, supply-chain investment, and brand investment.",
+    "长期债务": "long-term debt",
+    "回查受限现金、VIE 资金转移、债务到期和可用现金口径。": "Review restricted cash, VIE fund transferability, debt maturities, and usable-cash definitions.",
+    "回购是否抵消股权激励稀释": "whether buybacks offset equity-incentive dilution",
+    "完整 ADS / 普通股稀释桥": "complete ADS / ordinary-share dilution bridge",
+    "确认回购是否抵消股权激励稀释，并补完整 ADS / 普通股桥。": "Verify whether repurchases offset equity-incentive dilution and complete the ADS / ordinary-share bridge.",
+    "现金纳税": "cash taxes paid",
+    "减值项目": "impairment items",
+    "拆非 GAAP 调整、投资收益、税率调节和关键会计估计。": "Break down non-GAAP adjustments, investment income, tax-rate reconciliation, and critical accounting estimates.",
+    "全年业务线结构是否稳定披露": "whether full-year business-line structure is consistently disclosed",
+    "交易服务收入增长的价格/量/服务拆分": "price / volume / service split for transaction-services revenue growth",
+    "继续跟踪交易服务与在线营销收入占比。": "Continue tracking transaction-services and online-marketing revenue mix.",
+    "是否承担库存风险": "whether inventory risk is assumed",
+    "单独收入、利润和投入回收期": "standalone revenue, profit, and investment payback period",
+    "在业绩电话会和后续 6-K 中追问自营品牌业务的资本需求和利润影响。": "Ask in earnings calls and later 6-Ks about the capital needs and profit impact of the first-party brand business.",
+    "商家支持的金额与持续性": "amount and durability of merchant support",
+    "投入能否转化为利润率修复": "whether investment can translate into margin recovery",
+    "跟踪费用率、履约成本、商家支持和经营现金流是否随投入改善。": "Track whether expense ratios, fulfillment costs, merchant support, and operating cash flow improve with investment.",
+    "Temu 单独收入、利润、GMV 和履约成本": "Temu standalone revenue, profit, GMV, and fulfillment costs",
+    "全球业务 / Temu": "global business / Temu",
+    "需要第三层跟踪管理层对海外业务、合规和履约成本的解释。": "Layer 3 should track management explanations of overseas business, compliance, and fulfillment costs.",
+    "现金可转移性和 VIE 结构下的实际分配能力": "cash transferability and actual distribution capacity under the VIE structure",
+    "回到年报附注和 VIE 风险因素，确认现金可用性和资金转移限制。": "Return to annual-report notes and VIE risk factors to verify cash availability and fund-transfer restrictions.",
+    "变化对执行质量和资本配置纪律的影响": "impact of changes on execution quality and capital-allocation discipline",
+    "检查相关 6-K / 代理声明 / 股东会文件是否披露职责、薪酬或控制权变化。": "Check relevant 6-K / proxy / shareholder-meeting documents for changes in responsibilities, compensation, or control.",
+    "ADS 持有人实际投票参与情况": "actual ADS-holder voting participation",
+    "下一次 AGM 是否继续出现较高反对票": "whether the next AGM still shows high opposition votes",
+    "是否出现治理争议": "whether governance disputes appear",
+    "跟踪 AGM 投票结果、董事重选反对率和 ADS voting instruction 机制是否影响少数股东权利。": "Track AGM voting results, director-reelection opposition rates, and whether ADS voting-instruction mechanics affect minority-owner rights.",
+    "剩余可授予股份": "remaining shares available for grants",
+    "未来 SBC 强度": "future SBC intensity",
+    "回购是否抵消激励稀释": "whether buybacks offset incentive dilution",
+    "把股权计划期限延长与 SBC / 收入、SBC / 经营现金流、稀释股数和回购桥表一起跟踪。": "Track the equity-plan term extension together with SBC / revenue, SBC / operating cash flow, diluted shares, and the buyback bridge.",
+    "关键审计事项的敏感性和后续变化": "sensitivity and subsequent changes in key audit matters",
+    "跟踪审计师、ICFR、关键审计事项和会计估计是否变化。": "Track changes in the auditor, ICFR, key audit matters, and accounting estimates.",
+    "补自营品牌单位经济性和库存风险。": "Add first-party brand unit economics and inventory-risk evidence.",
+    "补成本细项抽取。": "Add detailed cost-line extraction.",
+    "补维护性/增长性资本开支拆分。": "Add maintenance / growth capex split.",
+    "补充 usable_cash_and_vie_transferability。": "Add usable_cash_and_vie_transferability.",
+    "如果官方后续披露，补充：": "If later official disclosures provide it, add: ",
+    "履约成本": "fulfillment costs",
+    "品牌业务的收入和利润披露": "brand-business revenue and profit disclosure",
+    "三年后利润率框架": "three-year margin framework",
+    "利润率底部": "margin floor",
+    "投资强度峰值": "peak investment intensity",
+    "交易服务收入与收入结构": "transaction-services revenue and revenue mix",
+    "自营品牌业务": "first-party brand business",
+    "供应链投入与商家支持": "supply-chain investment and merchant support",
+    "受限现金、VIE 与资金可转移性": "restricted cash, VIE, and fund transferability",
+    "2015 Global Share Plan 期限延长": "2015 Global Share Plan term extension",
+    "从轻平台叙事转向更深供应链组织者": "shift from an asset-light platform narrative to a deeper supply-chain organizer",
+    "库存风险": "inventory risk",
+    "三年“再造一个拼多多”进入执行期": "three-year 'build another Pinduoduo' plan entering execution",
+    "投入回收期": "investment payback period",
+    "投入项目的 KPI": "investment-project KPIs",
+    "管理层没有给稳定利润率目标": "management did not provide a stable-margin target",
+    "恢复时间表": "recovery timeline",
+    "商家广告投资回报": "merchant advertising ROI",
+    "费用化节奏": "expense-recognition timing",
+    "投资回报": "investment return",
+    "利润率是否有内部目标或底部": "whether margins have an internal target or floor",
+    "利润压力中有多少来自竞争、有多少来自主动投入": "how much margin pressure comes from competition versus intentional investment",
+    "应收、预付、存货、应付、商家保证金、递延收入完整桥": "complete working-capital bridge across receivables, prepayments, inventory, payables, merchant deposits, and deferred revenue",
+    "受限现金性质": "restricted-cash nature",
+    "在线营销收入拆分": "online-marketing revenue breakdown",
+    "履约/退货成本": "fulfillment / return costs",
+    "投资收益": "investment income",
+    "税项": "tax items",
+    "权益法投资": "equity-method investments",
+    "回购是否抵消 SBC": "whether buybacks offset SBC",
+    "补经营利润桥和费用率完整桥。": "Add operating-profit bridge and complete expense-ratio bridge.",
+    "补充 working_capital_bridge。": "Add working_capital_bridge.",
+    "补充 below_operating_bridge。": "Add below_operating_bridge.",
+    "补充 share_count_and_capital_return_bridge。": "Add share_count_and_capital_return_bridge.",
+    "广告 take-rate": "advertising take rate",
+}
+
+
+def _english_safe_artifact(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _english_safe_artifact(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_english_safe_artifact(item) for item in value]
+    if isinstance(value, tuple):
+        return [_english_safe_artifact(item) for item in value]
+    if isinstance(value, str):
+        translated = _apply_known_english_translations(value)
+        if not _contains_cjk(translated):
+            return translated
+        digest = hashlib.sha1(translated.encode("utf-8")).hexdigest()[:10]
+        return f"Non-English generated free text omitted from English workflow artifact. original_text_sha1={digest}"
+    return value
 
 
 def _ensure_english_report(report: str) -> str:
